@@ -1,0 +1,6 @@
+@reservation_system_for_sports_facilities_API_HostAddress = http://localhost:5036
+
+GET {{reservation_system_for_sports_facilities_API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
