@@ -16,10 +16,11 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context = context;
         }
 
+
+        //Endpointy pro všechny uživatele
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VenueResponseDto>>> GetVenues()
         {
-            // Převedeme modely na DTO (ručně, zatím bez AutoMapperu)
             return await _context.Venues
                 .Select(v => new VenueResponseDto
                 {
@@ -31,10 +32,37 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+
+        //Získání sporotovišť
+        [HttpGet("{id}/Facilities")]
+        public async Task<ActionResult<IEnumerable<FacilityResponseDto>>> GetFacilitiesByVenue(int id)
+        {
+
+            var venueExists = await _context.Venues.AnyAsync(v => v.Id == id);
+            if (!venueExists)
+            {
+                return NotFound($"Místo (Venue) s ID {id} nebylo nalezeno.");
+            }
+
+            var facilities = await _context.Facilities
+                .Where(f => f.VenueId == id)
+                .Select(f => new FacilityResponseDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    VenueId = f.VenueId,
+                    SportId = f.SportId
+                })
+                .ToListAsync();
+
+            return Ok(facilities);
+        }
+
+        //Endpointy pro admina
+        //Vytvoření
         [HttpPost]
         public async Task<ActionResult<VenueResponseDto>> CreateVenue(CreateVenueRequestDto dto)
         {
-            // Mapování z DTO na Model
             var venue = new Venue
             {
                 Name = dto.Name,
@@ -45,7 +73,6 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context.Venues.Add(venue);
             await _context.SaveChangesAsync();
 
-            // Vrátíme zpět Response DTO (včetně nového ID)
             var response = new VenueResponseDto
             {
                 Id = venue.Id,
@@ -56,5 +83,49 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
             return CreatedAtAction(nameof(GetVenues), new { id = venue.Id }, response);
         }
+
+        //Editace
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateVenue(int id, CreateVenueRequestDto dto)
+        {
+            var venue = await _context.Venues.FindAsync(id);
+
+            if (venue == null)
+            {
+                return NotFound($"Sportoviště s ID {id} neexistuje.");
+            }
+
+            venue.Name = dto.Name;
+            venue.Address = dto.Address;
+            venue.City = dto.City;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "Chyba při ukládání do databáze.");
+            }
+
+            return NoContent(); 
+        }
+
+        // Smazání 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteVenue(int id)
+        {
+            var venue = await _context.Venues.FindAsync(id);
+            if (venue == null)
+            {
+                return NotFound();
+            }
+
+            _context.Venues.Remove(venue);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
     }
 }
