@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public int VenueId { get; set; }
-        public int SportId { get; set; }
+        public List<SportDto> Sports { get; set; } = new List<SportDto>();
     }
 
     public class CreateFacilityRequestDto

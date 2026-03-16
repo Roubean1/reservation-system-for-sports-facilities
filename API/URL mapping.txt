@@ -1,0 +1,109 @@
+ipadd:port/api/…
+
+FACILITIES:
+
+/Facilities [GET]
+	Get all Facilities
+
+/Facilities/:id/prices [GET]
+	Get prices for facility with id
+
+RESERVATIONS:
+/Reservations [POST]
+	Create new reservation
+
+/Reservations/:id [DELETE]
+	Change status to "CANCELLED"
+
+
+USERS:
+/Users [POST]
+	Register new user
+
+/Users/:id [GET]
+	Get info about user
+
+/Users/:id [PUT]
+	Edit user
+
+/Users/login [POST]
+	Login to user account
+
+
+VENUES:
+/Venues [GET]
+	Get all Venues
+
+/Venues/:id/facilities [GET]
+	Get all facilities of Venue with id
+
+
+------------------------------------------------------------------------
+
+
+
+ADMIN LINKS:
+FACILITIES:
+
+/Facilities [POST]
+	Add new Facility
+
+/Facilities/:id [PUT]
+	Edit facility with id
+
+/Facilities/:id [DELETE]
+	Delete facility with id
+
+
+PRICE LISTS:
+/PriceLists [POST]
+	Add new PriceList
+
+/PriceLists/:id [PUT]
+	Edit price with id
+
+/PriceLists/:id [DELETE]
+	Delete price with id
+
+
+RESERVATIONS:
+/Reservations [GET]
+	Get all reservations
+
+SPORTS:
+/Sports [GET]
+	Get all sports
+
+/Sports [POST]
+	Add new sport
+
+/Sports/:id [PUT]
+	Edit sport with id
+
+/Sports/:id [DELETE]
+	delete sport with id
+
+USERS:
+/Users [GET]
+	Get all users
+
+VENUES:
+
+/Venues [POST]
+	Add new venue
+
+/Venues/:id [PUT]
+	Edit venue with id
+
+/Venues/:id [DELETE]
+	Delete venue with id
+
+
+
+---------------------------------------------------
+
+TODO:
+Facility/reservations
+User/reservations
+
+

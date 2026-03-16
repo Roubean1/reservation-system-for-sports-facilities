@@ -37,12 +37,8 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         [HttpGet("{id}/Facilities")]
         public async Task<ActionResult<IEnumerable<FacilityResponseDto>>> GetFacilitiesByVenue(int id)
         {
-
             var venueExists = await _context.Venues.AnyAsync(v => v.Id == id);
-            if (!venueExists)
-            {
-                return NotFound($"Místo (Venue) s ID {id} nebylo nalezeno.");
-            }
+            if (!venueExists) return NotFound($"Venue s ID {id} nenalezeno.");
 
             var facilities = await _context.Facilities
                 .Include(f => f.Sports)
@@ -52,8 +48,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                     Id = f.Id,
                     Name = f.Name,
                     VenueId = f.VenueId,
-                    // Vrátíme první ID sportu ze seznamu pro zachování kompatibility s DTO
-                    SportId = f.Sports.Select(s => s.Id).FirstOrDefault()
+                    Sports = f.Sports.Select(s => new SportDto { Id = s.Id, Name = s.Name }).ToList()
                 })
                 .ToListAsync();
 

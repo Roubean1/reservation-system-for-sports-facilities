@@ -16,6 +16,7 @@
     {
         public int UserId { get; set; }
         public int FacilityId { get; set; }
+        public int SportId { get; set; }
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
     }

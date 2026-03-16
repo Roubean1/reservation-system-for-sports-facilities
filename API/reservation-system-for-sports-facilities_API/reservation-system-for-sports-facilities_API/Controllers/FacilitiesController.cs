@@ -16,30 +16,28 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context = context;
         }
 
-        // Získání všech
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FacilityResponseDto>>> GetFacilities()
         {
             return await _context.Facilities
-                .Include(f => f.Sports) // Nutné pro přístup k seznamu sportů
+                .Include(f => f.Sports) // Načtení M:N vazeb
                 .Select(f => new FacilityResponseDto
                 {
                     Id = f.Id,
                     Name = f.Name,
                     VenueId = f.VenueId,
-                    // Mapujeme seznam ID sportů (pokud má DTO List<int> SportIds) nebo bereme první (pro kompatibilitu)
-                    SportId = f.Sports.Select(s => s.Id).FirstOrDefault()
+                    Sports = f.Sports.Select(s => new SportDto { Id = s.Id, Name = s.Name }).ToList()
                 })
                 .ToListAsync();
         }
 
-        // Vytvoření
         [HttpPost]
         public async Task<ActionResult<FacilityResponseDto>> CreateFacility(CreateFacilityRequestDto dto)
         {
+            var venue = await _context.Venues.FindAsync(dto.VenueId);
             var sport = await _context.Sports.FindAsync(dto.SportId);
 
-            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) || sport == null)
+            if (venue == null || sport == null)
             {
                 return BadRequest("Zadané VenueId nebo SportId neexistuje.");
             }
@@ -50,7 +48,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 VenueId = dto.VenueId
             };
 
-            // Přidáme sport do kolekce haly
+            // Přidání sportu do M:N kolekce (EF Core se postará o tabulku facility_sports)
             facility.Sports.Add(sport);
 
             _context.Facilities.Add(facility);
@@ -61,13 +59,12 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 Id = facility.Id,
                 Name = facility.Name,
                 VenueId = facility.VenueId,
-                SportId = dto.SportId
+                Sports = new List<SportDto> { new SportDto { Id = sport.Id, Name = sport.Name } }
             };
 
             return CreatedAtAction(nameof(GetFacilities), new { id = facility.Id }, response);
         }
 
-        // editace
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFacility(int id, CreateFacilityRequestDto dto)
         {
@@ -75,16 +72,12 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             if (facility == null) return NotFound();
 
             var sport = await _context.Sports.FindAsync(dto.SportId);
-
-            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) || sport == null)
-            {
-                return BadRequest("Zadané VenueId nebo SportId neexistuje.");
-            }
+            if (sport == null) return BadRequest("SportId neexistuje.");
 
             facility.Name = dto.Name;
             facility.VenueId = dto.VenueId;
 
-            // Aktualizace sportů - vyčistíme staré a přidáme nový (podle DTO)
+            // Jednoduchá logika: nahradíme stávající sporty tím novým z DTO
             facility.Sports.Clear();
             facility.Sports.Add(sport);
 
@@ -92,7 +85,6 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return NoContent();
         }
 
-        // delete
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFacility(int id)
         {
@@ -102,6 +94,25 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context.Facilities.Remove(facility);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+
+        // Get prices for Facility
+        [HttpGet("{facilityId}/prices")]
+        public async Task<ActionResult<IEnumerable<PriceListResponseDto>>> GetPricesByFacility(int facilityId)
+        {
+            return await _context.PriceLists
+                .Where(p => p.FacilityId == facilityId)
+                .Select(p => new PriceListResponseDto
+                {
+                    Id = p.Id,
+                    FacilityId = p.FacilityId,
+                    SportId = p.SportId,
+                    Membership = p.Membership,
+                    PricePerHour = p.PricePerHour,
+                    Currency = p.Currency
+                })
+                .ToListAsync();
         }
     }
 }
