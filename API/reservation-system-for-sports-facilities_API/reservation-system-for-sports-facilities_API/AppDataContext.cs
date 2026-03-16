@@ -21,7 +21,18 @@ namespace reservation_system_for_sports_facilities_API
         {
             base.OnModelCreating(modelBuilder);
 
-            // SQLite nepodporuje typ decimal přímo, EF Core ho může převést na double automaticky:
+            // KONFIGURACE M:N VAZBY (Facility <-> Sport)
+            // V\tvoření facility_sports bez třídy
+            modelBuilder.Entity<Facility>()
+                .HasMany(f => f.Sports)
+                .WithMany(s => s.Facilities)
+                .UsingEntity<Dictionary<string, object>>(
+                    "facility_sports", // Jméno tabulky v DB
+                    j => j.HasOne<Sport>().WithMany().HasForeignKey("sport_id"),
+                    j => j.HasOne<Facility>().WithMany().HasForeignKey("facility_id")
+                );
+
+            // KONVERZE DECIMAL NA DOUBLE (pro SQLite)
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 var properties = entityType.ClrType.GetProperties()

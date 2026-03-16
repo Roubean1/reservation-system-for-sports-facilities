@@ -21,12 +21,14 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         public async Task<ActionResult<IEnumerable<FacilityResponseDto>>> GetFacilities()
         {
             return await _context.Facilities
+                .Include(f => f.Sports) // Nutné pro přístup k seznamu sportů
                 .Select(f => new FacilityResponseDto
                 {
                     Id = f.Id,
                     Name = f.Name,
                     VenueId = f.VenueId,
-                    SportId = f.SportId
+                    // Mapujeme seznam ID sportů (pokud má DTO List<int> SportIds) nebo bereme první (pro kompatibilitu)
+                    SportId = f.Sports.Select(s => s.Id).FirstOrDefault()
                 })
                 .ToListAsync();
         }
@@ -35,8 +37,9 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         [HttpPost]
         public async Task<ActionResult<FacilityResponseDto>> CreateFacility(CreateFacilityRequestDto dto)
         {
-            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) ||
-                !await _context.Sports.AnyAsync(s => s.Id == dto.SportId))
+            var sport = await _context.Sports.FindAsync(dto.SportId);
+
+            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) || sport == null)
             {
                 return BadRequest("Zadané VenueId nebo SportId neexistuje.");
             }
@@ -44,9 +47,11 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             var facility = new Facility
             {
                 Name = dto.Name,
-                VenueId = dto.VenueId,
-                SportId = dto.SportId
+                VenueId = dto.VenueId
             };
+
+            // Přidáme sport do kolekce haly
+            facility.Sports.Add(sport);
 
             _context.Facilities.Add(facility);
             await _context.SaveChangesAsync();
@@ -56,7 +61,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 Id = facility.Id,
                 Name = facility.Name,
                 VenueId = facility.VenueId,
-                SportId = facility.SportId
+                SportId = dto.SportId
             };
 
             return CreatedAtAction(nameof(GetFacilities), new { id = facility.Id }, response);
@@ -66,18 +71,22 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFacility(int id, CreateFacilityRequestDto dto)
         {
-            var facility = await _context.Facilities.FindAsync(id);
+            var facility = await _context.Facilities.Include(f => f.Sports).FirstOrDefaultAsync(f => f.Id == id);
             if (facility == null) return NotFound();
 
-            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) ||
-                !await _context.Sports.AnyAsync(s => s.Id == dto.SportId))
+            var sport = await _context.Sports.FindAsync(dto.SportId);
+
+            if (!await _context.Venues.AnyAsync(v => v.Id == dto.VenueId) || sport == null)
             {
                 return BadRequest("Zadané VenueId nebo SportId neexistuje.");
             }
 
             facility.Name = dto.Name;
             facility.VenueId = dto.VenueId;
-            facility.SportId = dto.SportId;
+
+            // Aktualizace sportů - vyčistíme staré a přidáme nový (podle DTO)
+            facility.Sports.Clear();
+            facility.Sports.Add(sport);
 
             await _context.SaveChangesAsync();
             return NoContent();

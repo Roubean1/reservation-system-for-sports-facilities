@@ -17,6 +17,21 @@ namespace reservation_system_for_sports_facilities_API.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.25");
 
+            modelBuilder.Entity("facility_sports", b =>
+                {
+                    b.Property<int>("facility_id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("sport_id")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("facility_id", "sport_id");
+
+                    b.HasIndex("sport_id");
+
+                    b.ToTable("facility_sports");
+                });
+
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Equipment", b =>
                 {
                     b.Property<int>("Id")
@@ -88,15 +103,10 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SportId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("VenueId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SportId");
 
                     b.HasIndex("VenueId");
 
@@ -123,9 +133,14 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.Property<double>("PricePerHour")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("SportId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FacilityId");
+
+                    b.HasIndex("SportId");
 
                     b.ToTable("PriceLists");
                 });
@@ -140,6 +155,9 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FacilityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SportId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartAt")
@@ -158,6 +176,8 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FacilityId");
+
+                    b.HasIndex("SportId");
 
                     b.HasIndex("UserId");
 
@@ -263,6 +283,21 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.ToTable("Venues");
                 });
 
+            modelBuilder.Entity("facility_sports", b =>
+                {
+                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Facility", null)
+                        .WithMany()
+                        .HasForeignKey("facility_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Sport", null)
+                        .WithMany()
+                        .HasForeignKey("sport_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Equipment", b =>
                 {
                     b.HasOne("reservation_system_for_sports_facilities_API.Models.Venue", "Venue")
@@ -301,19 +336,11 @@ namespace reservation_system_for_sports_facilities_API.Migrations
 
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Facility", b =>
                 {
-                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Sport", "Sport")
-                        .WithMany("Facilities")
-                        .HasForeignKey("SportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("reservation_system_for_sports_facilities_API.Models.Venue", "Venue")
                         .WithMany("Facilities")
                         .HasForeignKey("VenueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Sport");
 
                     b.Navigation("Venue");
                 });
@@ -326,7 +353,15 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Sport", "Sport")
+                        .WithMany()
+                        .HasForeignKey("SportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Facility");
+
+                    b.Navigation("Sport");
                 });
 
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Reservation", b =>
@@ -337,6 +372,12 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Sport", "Sport")
+                        .WithMany()
+                        .HasForeignKey("SportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("reservation_system_for_sports_facilities_API.Models.User", "User")
                         .WithMany("Reservations")
                         .HasForeignKey("UserId")
@@ -344,6 +385,8 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .IsRequired();
 
                     b.Navigation("Facility");
+
+                    b.Navigation("Sport");
 
                     b.Navigation("User");
                 });
@@ -367,11 +410,6 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.Navigation("PriceLists");
 
                     b.Navigation("Reservations");
-                });
-
-            modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Sport", b =>
-                {
-                    b.Navigation("Facilities");
                 });
 
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.User", b =>

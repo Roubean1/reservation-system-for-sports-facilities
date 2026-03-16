@@ -33,15 +33,42 @@ namespace reservation_system_for_sports_facilities_API
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(); // PRIDANO: Aktivace CORS
+            app.UseCors();
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
 
+
+
+            //Init DB
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDataContext>();
-                db.Database.Migrate(); // ODKOMENTOVANO: Automatická migrace
+
+                
+                db.Database.Migrate();
+
+                // Inserting data, when DB is empty
+                if (!db.Sports.Any())
+                {
+                    try
+                    {
+                        var sqlPath = Path.Combine(AppContext.BaseDirectory, "test_data_insert.sql");
+
+                        if (!File.Exists(sqlPath))
+                        {
+                            sqlPath = "test_data_insert.sql";
+                        }
+
+                        var sql = File.ReadAllText(sqlPath);
+                        db.Database.ExecuteSqlRaw(sql);
+                        Console.WriteLine("Databáze byla úspěšně naplněna daty.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Chyba při plnění databáze: {ex.Message}");
+                    }
+                }
             }
 
             app.Run();

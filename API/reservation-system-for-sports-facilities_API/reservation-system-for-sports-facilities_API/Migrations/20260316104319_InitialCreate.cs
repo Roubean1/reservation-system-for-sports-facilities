@@ -108,22 +108,39 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     VenueId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    SportId = table.Column<int>(type: "INTEGER", nullable: false)
+                    Name = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Facilities", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Facilities_Sports_SportId",
-                        column: x => x.SportId,
-                        principalTable: "Sports",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_Facilities_Venues_VenueId",
                         column: x => x.VenueId,
                         principalTable: "Venues",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "facility_sports",
+                columns: table => new
+                {
+                    facility_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    sport_id = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_facility_sports", x => new { x.facility_id, x.sport_id });
+                    table.ForeignKey(
+                        name: "FK_facility_sports_Facilities_facility_id",
+                        column: x => x.facility_id,
+                        principalTable: "Facilities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_facility_sports_Sports_sport_id",
+                        column: x => x.sport_id,
+                        principalTable: "Sports",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -135,6 +152,7 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     FacilityId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SportId = table.Column<int>(type: "INTEGER", nullable: false),
                     Membership = table.Column<string>(type: "TEXT", nullable: false),
                     PricePerHour = table.Column<double>(type: "REAL", nullable: false),
                     Currency = table.Column<string>(type: "TEXT", nullable: false)
@@ -148,6 +166,12 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         principalTable: "Facilities",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PriceLists_Sports_SportId",
+                        column: x => x.SportId,
+                        principalTable: "Sports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -158,6 +182,7 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     FacilityId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SportId = table.Column<int>(type: "INTEGER", nullable: false),
                     StartAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Status = table.Column<string>(type: "TEXT", nullable: false),
@@ -170,6 +195,12 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         name: "FK_Reservations_Facilities_FacilityId",
                         column: x => x.FacilityId,
                         principalTable: "Facilities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reservations_Sports_SportId",
+                        column: x => x.SportId,
+                        principalTable: "Sports",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -236,14 +267,14 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                 column: "VenueId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Facilities_SportId",
-                table: "Facilities",
-                column: "SportId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Facilities_VenueId",
                 table: "Facilities",
                 column: "VenueId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_facility_sports_sport_id",
+                table: "facility_sports",
+                column: "sport_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PriceLists_FacilityId",
@@ -251,9 +282,19 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                 column: "FacilityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PriceLists_SportId",
+                table: "PriceLists",
+                column: "SportId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reservations_FacilityId",
                 table: "Reservations",
                 column: "FacilityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reservations_SportId",
+                table: "Reservations",
+                column: "SportId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reservations_UserId",
@@ -273,6 +314,9 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                 name: "EquipmentRentals");
 
             migrationBuilder.DropTable(
+                name: "facility_sports");
+
+            migrationBuilder.DropTable(
                 name: "PriceLists");
 
             migrationBuilder.DropTable(
@@ -288,10 +332,10 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                 name: "Facilities");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Sports");
 
             migrationBuilder.DropTable(
-                name: "Sports");
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Venues");

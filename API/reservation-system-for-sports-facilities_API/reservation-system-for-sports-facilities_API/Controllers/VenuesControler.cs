@@ -45,13 +45,15 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             }
 
             var facilities = await _context.Facilities
+                .Include(f => f.Sports)
                 .Where(f => f.VenueId == id)
                 .Select(f => new FacilityResponseDto
                 {
                     Id = f.Id,
                     Name = f.Name,
                     VenueId = f.VenueId,
-                    SportId = f.SportId
+                    // Vrátíme první ID sportu ze seznamu pro zachování kompatibility s DTO
+                    SportId = f.Sports.Select(s => s.Id).FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -108,7 +110,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 return StatusCode(500, "Chyba při ukládání do databáze.");
             }
 
-            return NoContent(); 
+            return NoContent();
         }
 
         // Smazání 
