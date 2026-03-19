@@ -62,7 +62,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             // Price calculate
             var priceSetting = await _context.PriceLists.FirstOrDefaultAsync(p =>
                 p.FacilityId == dto.FacilityId &&
-                p.Membership == user.Membership); // user.Membership je např. "BASIC"
+                p.Membership == user.Membership); 
 
             if (priceSetting == null)
                 return BadRequest("Pro vaše členství a toto sportoviště není definována cena.");
@@ -107,11 +107,39 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             var reservation = await _context.Reservations.FindAsync(id);
             if (reservation == null) return NotFound();
 
-            // Místo smazání můžeme jen změnit status
             reservation.Status = "CANCELLED";
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
+
+        //Get rentals
+        [HttpGet("{id}/equipmentrentals")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRentalsByReservation(int id)
+        {
+            var reservationExists = await _context.Reservations.AnyAsync(r => r.Id == id);
+            if (!reservationExists)
+            {
+                return NotFound($"Rezervace s ID {id} nebyla nalezena.");
+            }
+
+            var rentals = await _context.EquipmentRentals
+                .Include(r => r.Equipment) 
+                .Where(r => r.ReservationId == id)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.EquipmentId,
+                    EquipmentName = r.Equipment != null ? r.Equipment.Name : "Neznámé vybavení",
+                    r.Qty,
+                    r.StartAt,
+                    r.EndAt
+                })
+                .ToListAsync();
+
+            return Ok(rentals);
+        }
+
     }
 }

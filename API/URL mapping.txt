@@ -1,12 +1,18 @@
 ipadd:port/api/…
-
+-------------------------------------------------------
 FACILITIES:
-
 /Facilities [GET]
 	Get all Facilities
 
 /Facilities/:id/prices [GET]
 	Get prices for facility with id
+
+
+/Facilities/:id/reservations [GET]
+	Get reservations facility with id
+
+
+
 
 RESERVATIONS:
 /Reservations [POST]
@@ -14,6 +20,10 @@ RESERVATIONS:
 
 /Reservations/:id [DELETE]
 	Change status to "CANCELLED"
+
+/Reservations/:id/EquipmentRentals [GET]
+	Get rentals for this reservation
+
 
 
 USERS:
@@ -29,6 +39,16 @@ USERS:
 /Users/login [POST]
 	Login to user account
 
+/Users/:id/reservations [GET]
+	Get all user ID reservation
+
+/Users/:id/equipmentrentals [GET]
+	Get all user ID rentals
+
+/Users/:id/SupportTickets [GET]
+	Get all user ID support tickets
+
+
 
 VENUES:
 /Venues [GET]
@@ -38,11 +58,27 @@ VENUES:
 	Get all facilities of Venue with id
 
 
+
+
+EQUIPMENT RENTAL:
+/EquipmentRentals [POST]
+	Create new rental
+
+/EquipmentRentals/:id [DELETE]
+	Delete rentaů with id
+
+
+
+SUPPORT TICKETS:
+/supporttickets [POST]
+	Create new TICKET
+
+/supporttickets/:id [DELETE]
+	Set status to RESOLVED
+
 ------------------------------------------------------------------------
-
-
-
 ADMIN LINKS:
+
 FACILITIES:
 
 /Facilities [POST]
@@ -98,12 +134,32 @@ VENUES:
 /Venues/:id [DELETE]
 	Delete venue with id
 
+/Venues/:id/equipments [GET]
+	Get all equipments from venue ID
 
+
+EQUIPMENT:
+/Equipments [GET]
+	Get all Equipments
+
+/Equipments [POST]
+	Add new Equipment
+
+/Equipments/:id [PUT]
+	Edit Equipment with id
+
+/Equipments/:id [DELETE]
+	delete Equipment with id
+
+
+
+EQUIPMENT RENTAL:
+/EquipmentRentals [Get]
+	Get all rentals
+
+
+SUPPORT TICKETS:
+/supporttickets [Get]
+	Get all rentals
 
 ---------------------------------------------------
-
-TODO:
-Facility/reservations
-User/reservations
-
-

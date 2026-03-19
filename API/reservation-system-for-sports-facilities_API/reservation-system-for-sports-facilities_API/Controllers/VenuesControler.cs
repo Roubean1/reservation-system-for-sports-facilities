@@ -124,5 +124,25 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return NoContent();
         }
 
+
+        // Získání vybavení konrétního areálu
+        [HttpGet("{venueId}/equipments")]
+        public async Task<ActionResult<IEnumerable<EquipmentResponseDto>>> GetEquipmentByVenue(int venueId)
+        {
+            var venueExists = await _context.Venues.AnyAsync(v => v.Id == venueId);
+            if (!venueExists) return NotFound($"Areál s ID {venueId} neexistuje.");
+
+            return await _context.Equipments
+                .Where(e => e.VenueId == venueId)
+                .Select(e => new EquipmentResponseDto
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    QuantityAvailable = e.Quantity,
+                    PricePerHour = e.PricePerHour
+                })
+                .ToListAsync();
+        }
+
     }
 }

@@ -114,5 +114,31 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 })
                 .ToListAsync();
         }
+
+        [HttpGet("{facilityId}/reservations")]
+        public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetReservationsByFacility(int facilityId)
+        {
+            var facilityExists = await _context.Facilities.AnyAsync(f => f.Id == facilityId);
+            if (!facilityExists) return NotFound($"Hala s ID {facilityId} neexistuje.");
+
+            var reservations = await _context.Reservations
+                .Include(r => r.Facility)
+                .Where(r => r.FacilityId == facilityId)
+                .OrderBy(r => r.StartAt) 
+                .Select(r => new ReservationResponseDto
+                {
+                    Id = r.Id,
+                    UserId = r.UserId,
+                    FacilityId = r.FacilityId,
+                    FacilityName = r.Facility != null ? r.Facility.Name : "Neznámé",
+                    StartAt = r.StartAt,
+                    EndAt = r.EndAt,
+                    Status = r.Status,
+                    TotalPrice = r.TotalPrice
+                })
+                .ToListAsync();
+
+            return Ok(reservations);
+        }
     }
 }

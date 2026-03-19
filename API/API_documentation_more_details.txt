@@ -1,0 +1,173 @@
+========================================================================
+SPORTS FACILITY RESERVATION SYSTEM - API URL MAPPING (v1.0)
+========================================================================
+
+Base URL: http://<ip_address>:<port>/api/
+
+------------------------------------------------------------------------
+1. PUBLIC & USER ENDPOINTS
+------------------------------------------------------------------------
+
+FACILITIES (Courts, Halls, Fields)
+----------------------------------
+GET    /Facilities
+       Description: Retrieve all facilities across all venues.
+       Response:    IEnumerable<FacilityResponseDto>
+
+GET    /Facilities/:id/prices
+       Description: Get current price list for a specific facility.
+       Response:    IEnumerable<PriceListResponseDto>
+
+GET    /Facilities/:id/reservations
+       Description: Get all active reservations for a specific facility.
+       Response:    IEnumerable<ReservationResponseDto>
+
+RESERVATIONS
+------------
+POST   /Reservations
+       Description: Create a new facility reservation.
+       Request:     CreateReservationRequestDto
+       Response:    ReservationResponseDto
+
+DELETE /Reservations/:id
+       Description: Cancel a reservation (changes status to "CANCELLED").
+       Response:    204 No Content
+
+GET    /Reservations/:id/EquipmentRentals
+       Description: Get all equipment rentals linked to this reservation.
+       Response:    IEnumerable<object> (Flat anonymous object)
+
+USERS & ACCOUNT MANAGEMENT
+--------------------------
+POST   /Users
+       Description: Register a new user account.
+       Request:     CreateUserRequestDto
+       Response:    UserResponseDto
+
+GET    /Users/:id
+       Description: Get profile info for a specific user.
+       Response:    UserResponseDto
+
+PUT    /Users/:id
+       Description: Update user profile or password.
+       Request:     CreateUserRequestDto
+       Response:    204 No Content
+
+POST   /Users/login
+       Description: Authenticate user and return profile.
+       Request:     LoginRequestDto
+       Response:    UserResponseDto
+
+GET    /Users/:id/reservations
+       Description: Get reservation history for a specific user.
+       Response:    IEnumerable<ReservationResponseDto>
+
+GET    /Users/:id/equipmentrentals
+       Description: Get all equipment rentals for a specific user.
+       Response:    IEnumerable<EquipmentRentalResponseDto>
+
+GET    /Users/:id/SupportTickets
+       Description: Get all support tickets submitted by a user.
+       Response:    IEnumerable<SupportTicketResponseDto>
+
+VENUES & INVENTORY
+------------------
+GET    /Venues
+       Description: Get a list of all sports complexes (Venues).
+       Response:    IEnumerable<VenueResponseDto>
+
+GET    /Venues/:id/facilities
+       Description: Get all facilities located within a specific Venue.
+       Response:    IEnumerable<FacilityResponseDto>
+
+GET    /Venues/:id/equipments
+       Description: Get all available equipment at a specific Venue.
+       Response:    IEnumerable<EquipmentResponseDto>
+
+EQUIPMENT RENTALS
+-----------------
+POST   /EquipmentRentals
+       Description: Rent specific equipment (rackets, balls, etc.).
+       Request:     CreateRentalRequestDto
+       Response:    object (Flat anonymous object)
+
+DELETE /EquipmentRentals/:id
+       Description: Remove an equipment rental record.
+       Response:    204 No Content
+
+------------------------------------------------------------------------
+2. ADMINISTRATIVE ENDPOINTS
+------------------------------------------------------------------------
+
+SUPPORT TICKETS
+---------------
+GET    /SupportTickets
+       Description: View all incoming support requests.
+       Response:    IEnumerable<SupportTicketResponseDto>
+
+POST   /SupportTickets
+       Description: Submit a new ticket (available for guests/public).
+       Request:     SupportTicket (Model)
+       Response:    SupportTicketResponseDto
+
+DELETE /SupportTickets/:id
+       Description: Resolve a ticket (changes status to "RESOLVED").
+       Response:    204 No Content
+
+PRICE LISTS
+-----------
+POST   /PriceLists
+       Description: Add a new price entry to a facility.
+       Request:     CreatePriceListRequestDto
+       Response:    PriceListResponseDto
+
+PUT    /PriceLists/:id
+       Description: Update an existing price entry.
+       Request:     CreatePriceListRequestDto
+       Response:    204 No Content
+
+DELETE /PriceLists/:id
+       Description: Remove a price entry.
+       Response:    204 No Content
+
+SPORTS
+------
+GET    /Sports
+       Description: Get list of all supported sports.
+       Response:    IEnumerable<SportDto>
+
+POST   /Sports
+       Description: Add a new sport type.
+       Request:     SportDto
+       Response:    SportDto
+
+PUT    /Sports/:id
+       Description: Edit a sport name.
+       Request:     SportDto
+       Response:    204 No Content
+
+DELETE /Sports/:id
+       Description: Remove a sport type.
+       Response:    204 No Content
+
+EQUIPMENT (Warehouse)
+---------------------
+GET    /Equipments
+       Description: View all inventory across all locations.
+       Response:    IEnumerable<EquipmentResponseDto>
+
+POST   /Equipments
+       Description: Add new equipment to a Venue's inventory.
+       Request:     Equipment (Model)
+       Response:    EquipmentResponseDto
+
+PUT    /Equipments/:id
+       Description: Update equipment details or stock quantity.
+       Request:     Equipment (Model)
+       Response:    204 No Content
+
+DELETE /Equipments/:id
+       Description: Remove equipment from inventory.
+       Response:    204 No Content
+
+========================================================================

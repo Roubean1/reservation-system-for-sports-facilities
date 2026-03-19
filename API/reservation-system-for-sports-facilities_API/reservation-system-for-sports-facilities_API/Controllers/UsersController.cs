@@ -124,5 +124,76 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
             return Ok(response);
         }
+
+        //Získání všech rezervací uživatele
+        [HttpGet("{id}/reservations")]
+        public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetUserReservations(int id)
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == id);
+            if (!userExists) return NotFound($"Uživatel s ID {id} neexistuje.");
+
+            var reservations = await _context.Reservations
+                .Include(r => r.Facility)
+                .Where(r => r.UserId == id)
+                .OrderByDescending(r => r.StartAt)
+                .Select(r => new ReservationResponseDto
+                {
+                    Id = r.Id,
+                    UserId = r.UserId,
+                    FacilityId = r.FacilityId,
+                    FacilityName = r.Facility != null ? r.Facility.Name : "Neznámé",
+                    StartAt = r.StartAt,
+                    EndAt = r.EndAt,
+                    Status = r.Status,
+                    TotalPrice = r.TotalPrice
+                })
+                .ToListAsync();
+
+            return Ok(reservations);
+        }
+
+        // Získání zapůjček uživatele
+        [HttpGet("{userId}/equipmentrentals")]
+        public async Task<ActionResult<IEnumerable<EquipmentRentalResponseDto>>> GetUserRentals(int userId)
+        {
+            return await _context.EquipmentRentals
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Equipment)
+                .OrderByDescending(r => r.StartAt)
+                .Select(r => new EquipmentRentalResponseDto
+                {
+                    Id = r.Id,
+                    EquipmentId = r.EquipmentId,
+                    EquipmentName = r.Equipment != null ? r.Equipment.Name : "Neznámé",
+                    Qty = r.Qty,
+                    StartAt = r.StartAt,
+                    EndAt = r.EndAt,
+                    ReservationId = r.ReservationId
+                })
+                .ToListAsync();
+        }
+
+
+        [HttpGet("{userId}/SupportTickets")]
+        public async Task<ActionResult<IEnumerable<SupportTicketResponseDto>>> GetUserTickets(int userId)
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            if (!userExists) return NotFound($"Uživatel s ID {userId} neexistuje.");
+
+            return await _context.SupportTickets
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => new SupportTicketResponseDto
+                {
+                    Id = t.Id,
+                    UserId = t.UserId,
+                    Email = t.Email,
+                    Subject = t.Subject,
+                    Message = t.Message,
+                    Status = t.Status,
+                    CreatedAt = t.CreatedAt
+                })
+                .ToListAsync();
+        }
     }
 }
