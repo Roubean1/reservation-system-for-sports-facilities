@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BCrypt.Net;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
-using BCrypt.Net;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace reservation_system_for_sports_facilities_API.Controllers
 {
@@ -11,10 +15,39 @@ namespace reservation_system_for_sports_facilities_API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly AppDataContext _context;
+        private readonly IConfiguration _config;
 
-        public UsersController(AppDataContext context)
+        public UsersController(AppDataContext context, IConfiguration config)
         {
             _context = context;
+            _config = config;
+        }
+
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("Membership", user.Membership)
+            };
+
+            // Key in appsettings.json
+            var keyStr = _config["Jwt:Key"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(7), // Platnost 7 dní
+                SigningCredentials = creds
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
         }
 
         // všechny účty
@@ -33,7 +66,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Detail účtu
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
             var user = await _context.Users
@@ -104,25 +137,22 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
         //přihlášení (/api/users/login)
         [HttpPost("login")]
-        public async Task<ActionResult<UserResponseDto>> Login(LoginRequestDto dto)
+        public async Task<ActionResult<object>> Login(LoginRequestDto dto)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
                 return Unauthorized("Neplatný email nebo heslo.");
             }
 
-            var response = new UserResponseDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                FullName = user.FullName,
-                Membership = user.Membership
-            };
+            var token = CreateToken(user); // Pomocná metoda pro generování JWT
 
-            return Ok(response);
+            return Ok(new
+            {
+                Token = token,
+                User = new UserResponseDto { Id = user.Id, Email = user.Email, FullName = user.FullName, Membership = user.Membership }
+            });
         }
 
         //Získání všech rezervací uživatele

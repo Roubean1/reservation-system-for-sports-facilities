@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -35,6 +36,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ReservationResponseDto>> CreateReservation(CreateReservationRequestDto dto)
         {

@@ -1,5 +1,9 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace reservation_system_for_sports_facilities_API
 {
@@ -9,14 +13,37 @@ namespace reservation_system_for_sports_facilities_API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = false,   // Pro vývoj zatím vypnuto
+                    ValidateAudience = false, // Pro vývoj zatím vypnuto
+                    RequireExpirationTime = true,
+                    ValidateLifetime = true
+                };
+            });
+
+            builder.Services.AddAuthorization();
+
+
             builder.Services.AddDbContext<AppDataContext>(options =>
                 options.UseSqlite("Data Source=database.db"));
 
-            // PRIDANO: Nastavení CORS pro komunikaci s frontendem
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -32,6 +59,9 @@ namespace reservation_system_for_sports_facilities_API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseCors();
             app.UseHttpsRedirection();
