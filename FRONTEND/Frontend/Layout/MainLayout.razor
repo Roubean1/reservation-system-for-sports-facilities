@@ -1,0 +1,135 @@
+﻿@inherits LayoutComponentBase
+@inject AuthService AuthService
+@inject HttpClient Http
+
+<!-- NAVBAR -->
+<div class="page-container">
+<nav class="navbar">
+    <div class="navbar-inner">
+
+        <div>
+            <NavLink href="/">
+                <img src="imgs/logo.png" alt="logo" style="height: 50px; margin: 4px;" />
+            </NavLink>
+        </div>
+
+        <div>
+            <NavLink href="/sports" class="button1">Sporty</NavLink>
+            <NavLink href="/facilities" class="button1">Sportoviště</NavLink>
+            <NavLink href="/reservation" class="button1">Rezervace</NavLink>
+        </div>
+
+            <div>
+                @if (isLoggedIn)
+                {
+                    <button class="button1" @onclick="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Odhlášení
+                    </button>
+
+                    <NavLink href="/profile" class="button1">
+                        <i class="fa-solid fa-user"></i> Profil
+                    </NavLink>
+                }
+                else
+                {
+                <NavLink href="/login" class="button1">
+                    <i class="fa-solid fa-right-to-bracket"></i> Přihlášení
+                </NavLink>
+                <NavLink href="/register" class="button1">
+                    <i class="fa-solid fa-user-plus"></i> Registrace
+                </NavLink>
+                }
+                
+            </div>
+
+    </div>
+</nav>
+
+
+<!-- MAIN -->
+<main class="main">
+    <div class="container" style="justify-content: center;">
+        @Body
+    </div>
+</main>
+
+
+<!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-inner">
+
+            <div class="footer-top">
+
+                <div class="footer-col footer-brand">
+                    <h2>Název</h2>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Produkt</h4>
+                    <p>Funkce</p>
+                    <p>Ceník</p>
+                    <p>Zdrojové materiály</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Prozkoumat</h4>
+                    <p>Sporty</p>
+                    <p>Sportoviště</p>
+                    <p>Vybavení</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Podpora</h4>
+                    <p>Pomoc</p>
+                    <p>Kontakt</p>
+                    <p>Komunita</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Společnost</h4>
+                    <p>O nás</p>
+                    <p>Kariéra</p>
+                    <p>Blog</p>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+
+                <div>
+                    © 2026 Název
+                </div>
+
+                <div class="footer-social">
+                    <i class="fa-brands fa-twitter"></i>
+                    <i class="fa-brands fa-facebook"></i>
+                    <i class="fa-brands fa-youtube"></i>
+                    <i class="fa-brands fa-instagram"></i>
+                    <i class="fa-brands fa-tiktok"></i>
+                </div>
+
+            </div>
+
+        </div>
+    </footer>
+</div>
+
+
+@code {
+    bool isLoggedIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoggedIn = await AuthService.IsLoggedIn();
+    }
+
+    async Task Logout()
+    {
+        await AuthService.Logout(Http);
+        isLoggedIn = false;
+
+        Navigation.NavigateTo("/");
+    }
+
+    [Inject] NavigationManager Navigation { get; set; } = default!;
+}

@@ -1,0 +1,173 @@
+﻿@page "/reservation"
+@using Frontend.DTO
+@inject HttpClient Http
+@inject AuthService AuthService
+
+<div class="card">
+    <h1>Nová rezervace</h1>
+
+    @if (facilities == null || facilities.Count == 0)
+    {
+        <p>Načítám...</p>
+    }
+    else
+    {
+        <div>
+
+            <!-- FACILITY -->
+            <label>Sportoviště:</label>
+            <select class="input1" @onchange="OnFacilityChanged">
+                <option value="">-- vyber sportoviště --</option>
+
+                @foreach (var f in facilities)
+                {
+                    <option value="@f.Id" selected="@(f.Id == selectedFacilityId)">
+                        @f.Name
+                    </option>
+                }
+            </select>
+
+
+
+            <!-- SPORT -->
+            <label>Sport:</label>
+            <select class="input1"
+                    @bind="selectedSportId"
+                    disabled="@(filteredSports.Count == 0)">
+                <option value="">-- vyber sport --</option>
+
+                @foreach (var s in filteredSports)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </select>
+
+
+
+            <!-- DATUM -->
+            <label>Začátek:</label>
+            <input type="datetime-local" class="input1" @bind="startAt" />
+
+            <label>Konec:</label>
+            <input type="datetime-local" class="input1" @bind="endAt" />
+
+
+
+            <button class="button2" @onclick="ConfirmReservation">
+                Potvrdit rezervaci <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <p>@message</p>
+            }
+
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? FacilityId { get; set; }
+
+    List<FacilityResponseDto> facilities = new();
+    List<SportDto> filteredSports = new();
+
+    int? selectedFacilityId;
+    int? selectedSportId;
+
+    DateTime startAt = DateTime.Now;
+    DateTime endAt = DateTime.Now.AddHours(1);
+
+    string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+
+        if (FacilityId.HasValue)
+        {
+            selectedFacilityId = FacilityId.Value;
+
+            var facility = facilities.FirstOrDefault(f => f.Id == selectedFacilityId);
+            filteredSports = facility?.Sports ?? new List<SportDto>();
+        }
+    }
+
+    void OnFacilityChanged(ChangeEventArgs e)
+    {
+        selectedSportId = null;
+
+        if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            selectedFacilityId = id;
+
+            var facility = facilities.FirstOrDefault(f => f.Id == id);
+            filteredSports = facility?.Sports ?? new List<SportDto>();
+        }
+        else
+        {
+            selectedFacilityId = null;
+            filteredSports = new List<SportDto>();
+        }
+    }
+
+    async Task ConfirmReservation()
+    {
+        if (selectedFacilityId == null || selectedSportId == null)
+        {
+            message = "Vyber sportoviště a sport!";
+            return;
+        }
+
+        var token = await AuthService.GetToken();
+        if (string.IsNullOrEmpty(token))
+        {
+            message = "Musíš být přihlášen!";
+            return;
+        }
+
+        var user = await AuthService.GetUser();
+        if (user == null)
+        {
+            message = "Nepodařilo se načíst uživatele.";
+            return;
+        }
+
+        var dto = new CreateReservationRequestDto
+        {
+            UserId = user.Id,
+            FacilityId = selectedFacilityId.Value,
+            SportId = selectedSportId.Value,
+            StartAt = startAt,
+            EndAt = endAt
+        };
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "Reservations")
+            {
+                Content = JsonContent.Create(dto)
+            };
+
+            request.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Rezervace vytvořena!";
+            }
+            else
+            {
+                message = $"{content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"{ex.Message}";
+        }
+    }
+}

@@ -1,0 +1,52 @@
+﻿@page "/login"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using Frontend.DTO
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div class="card">
+    <h1>Přihlášení</h1>
+    <div class="form1">
+        <input class="input1" placeholder="Email" @bind="email" />
+        <input class="input1" type="password" placeholder="Heslo" @bind="password" />
+        <button class="button2" style="width:200px" @onclick="LogMeIn">
+            Přihlásit <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        @if (!string.IsNullOrEmpty(message)){
+            <p>@message</p>
+        }
+    </div>
+</div>
+
+@code {
+    string email = "";
+    string password = "";
+    string? message;
+
+    async Task LogMeIn()
+    {
+        var response = await Http.PostAsJsonAsync("users/login", new
+        {
+            Email = email,
+            Password = password
+        });
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = "Špatné přihlašovací údaje";
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+        if (result?.Token != null)
+        {
+            await LocalStorage.SetItemAsync("token", result.Token);
+            await LocalStorage.SetItemAsync("user", result.User);
+        }
+
+        Nav.NavigateTo("/", true);
+    }
+
+    
+}

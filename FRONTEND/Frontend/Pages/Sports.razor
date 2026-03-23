@@ -1,0 +1,69 @@
+﻿@page "/sports"
+@using Frontend.DTO
+@inject HttpClient Http
+
+<div class="card">
+    <h1>Sporty</h1>
+
+    @if (sports == null || facilities == null)
+    {
+        <p>Načítám...</p>
+    }
+    else
+    {
+        <table class="table1">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Sport</th>
+                    <th>Sportoviště</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in sports)
+                {
+                    <tr>
+                        <td>@s.Id</td>
+                        <td>@s.Name</td>
+
+
+                        <!-- SPORTOVIŠTĚ -->
+                        <td>
+                            @{
+                                var relatedFacilities = facilities
+                                .Where(f => f.Sports.Any(sp => sp.Id == s.Id))
+                                .ToList();
+                            }
+
+                            @if (!relatedFacilities.Any())
+                            {
+                                <span>Žádné</span>
+                            }
+                            else
+                            {
+                                @foreach (var f in relatedFacilities)
+                                {
+                                    <NavLink href="@($"/facility/{f.Id}")" class="badge">
+                                        @f.Name
+                                    </NavLink>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    List<SportDto>? sports;
+    List<FacilityResponseDto>? facilities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sports = await Http.GetFromJsonAsync<List<SportDto>>("sports")?? new List<SportDto>();
+
+        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+    }
+}

@@ -1,0 +1,10 @@
+wwwroot\css\app.css
+wwwroot\css\bootstrap\bootstrap.min.css
+wwwroot\css\bootstrap\bootstrap.min.css.map
+wwwroot\favicon.png
+wwwroot\icon-192.png
+wwwroot\imgs\logo.png
+wwwroot\imgs\sportovisteUvod.jpg
+wwwroot\imgs\vybaveniUvod.jpg
+wwwroot\index.html
+wwwroot\sample-data\weather.json

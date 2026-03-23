@@ -1,0 +1,272 @@
+﻿@page "/profile"
+@using Frontend.DTO
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div class="card">
+    <h1>Profil</h1>
+
+    @if (user == null)
+    {
+        <p>Načítám...</p>
+    }
+    else
+    {
+        <!-- USER INFO -->
+        <h5>Osobní údaje</h5>
+
+        <div style="display: flex; flex-direction: column; gap:15px; max-width: 600px;">
+            <div class="row">
+                <p style="margin-bottom:0px; padding-bottom:0px">Email:</p>
+                <input @bind="editModel.Email" style="flex: 1; margin-top:0px;" />
+            </div>
+
+            <div class="row">
+                <p style="margin-bottom:0px; padding-bottom:0px">Jméno:</p>
+                <input style="flex: 1;margin-top:0px;" @bind="editModel.FullName" />
+            </div>
+
+            <div class="row">
+                <p style="margin-bottom:0px; padding-bottom:0px">Nové heslo:</p>
+                <input style="flex: 1;margin-top:0px;" type="password" placeholder="Nové heslo (nepovinné)" @bind="editModel.Password" />
+                <button class="button2" style="max-width:200px" @onclick="UpdateProfile">
+                    <i class="fa-solid fa-floppy-disk"></i> Uložit změny
+                </button>
+            </div>
+        </div>
+
+
+
+        <hr />
+
+        <!-- clenstvi -->
+        <h5>Membership:</h5>
+        <span class="badge @(@user.Membership == "PREMIUM" ? "badge-vip" : "badge-basic")" style="max-width:100px">
+            @user.Membership
+        </span>
+
+        <hr />
+
+
+        <!-- REZERVACE -->
+        <h5>Moje rezervace</h5>
+
+        @if (reservations == null)
+        {
+            <p>Načítám rezervace...</p>
+        }
+        else if (!reservations.Any())
+        {
+            <p>Nemáš žádné rezervace</p>
+        }
+        else
+        {
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>Sportoviště</th>
+                        <th>Od</th>
+                        <th>Do</th>
+                        <th>Status</th>
+                        <th>Cena</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in reservations)
+                    {
+                        <tr>
+                            <td>@r.FacilityName</td>
+                            <td>@r.StartAt.ToString("g")</td>
+                            <td>@r.EndAt.ToString("g")</td>
+                            <td>@r.Status</td>
+                            <td>@r.TotalPrice Kč</td>
+                            <td>
+                                @if (r.Status != "CANCELLED")
+                                {
+                                    <button class="button2 btn-danger" @onclick="() => CancelReservation(r.Id)">
+                                        Zrušit
+                                    </button>
+                                }
+                                else
+                                {
+                                  
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+
+        <hr />
+
+
+        <!-- VYBAVENI -->
+        <h5>Vypujčené vybavení</h5>
+
+        @if (equipmentRentals == null)
+        {
+            <p>Načítám vybavení...</p>
+        }
+        else if (!equipmentRentals.Any())
+        {
+            <p>Nemáš žádné vypujčené vybavení</p>
+        }
+        else
+        {
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>Název</th>
+                        <th>Od</th>
+                        <th>Do</th>
+                        <th>Množství</th>
+                        <th>K rezervaci</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in equipmentRentals)
+                    {
+                        <tr>
+                            <td>@e.EquipmentName</td>
+                            <td>@e.StartAt.ToString("g")</td>
+                            <td>@e.EndAt.ToString("g")</td>
+                            <td>@e.Qty</td>
+                            <td>@e.ReservationId</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+
+        <hr />
+
+
+        <!-- SUPPORT -->
+        <h5>Support tickety</h5>
+
+        @if (supportTickets == null)
+        {
+            <p>Načítám tickety...</p>
+        }
+        else if (!supportTickets.Any())
+        {
+            <p>Žadné tickety</p>
+        }
+        else
+        {
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>Předmět</th>
+                        <th>Zpráva</th>
+                        <th>Status</th>
+                        <th>Vytvořeno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in supportTickets)
+                    {
+                        <tr>
+                            <td>@s.Subject</td>
+                            <td>@s.Message</td>
+                            <td>@s.Status</td>
+                            <td>@s.CreatedAt.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+
+
+
+
+@code {
+    UserResponseDto? user;
+    CreateUserRequestDto editModel = new();
+    List<ReservationResponseDto>? reservations;
+    List<EquipmentRentalResponseDto>? equipmentRentals;
+    List<SupportTicketResponseDto>? supportTickets;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await LocalStorage.GetItemAsync<UserResponseDto>("user");
+        if (user == null) return;
+
+        editModel.Email = user.Email;
+        editModel.FullName = user.FullName;
+
+        await LoadReservations();
+        await LoadEquipmentRentals();
+        await LoadSupportTickets();
+    }
+
+
+
+
+    async Task LoadReservations()
+    {
+        if (user == null) return;
+
+        reservations = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"users/{user.Id}/reservations") ?? new List<ReservationResponseDto>();
+    }
+
+    async Task LoadEquipmentRentals()
+    {
+        if (user == null) return;
+        equipmentRentals = await Http.GetFromJsonAsync<List<EquipmentRentalResponseDto>>($"users/{user.Id}/equipmentrentals") ?? new List<EquipmentRentalResponseDto>();
+    }
+
+    async Task LoadSupportTickets()
+    {
+        if (user == null) return;
+        supportTickets = await Http.GetFromJsonAsync<List<SupportTicketResponseDto>>($"users/{user.Id}/SupportTickets") ?? new List<SupportTicketResponseDto>();
+    }
+
+
+
+
+
+    async Task UpdateProfile()
+    {
+        if (user == null) return;
+        var response = await Http.PutAsJsonAsync($"users/{user.Id}", editModel);
+        if (response.IsSuccessStatusCode)
+        {
+            user = await Http.GetFromJsonAsync<UserResponseDto>($"users/{user.Id}");
+            if (user != null)
+            {
+                await LocalStorage.SetItemAsync("user", user);
+            }
+        }
+    }
+
+
+
+
+
+
+    async Task CancelReservation(int reservationId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Opravdu chcete zrušit tuto rezervaci?");
+        if (!confirmed) return;
+
+        var response = await Http.DeleteAsync($"Reservations/{reservationId}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadReservations();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Nepodařilo se zrušit rezervaci.");
+        }
+    }
+    [Inject] IJSRuntime JS { get; set; } = default!;
+}

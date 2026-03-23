@@ -1,0 +1,53 @@
+﻿@page "/facilities"
+@using Frontend.DTO
+@inject HttpClient Http
+
+<div class="card">
+
+    <h1>Sportoviště</h1>
+
+    @if (facilities == null)
+    {
+        <p>Načítám...</p>
+    }
+    else
+    {
+        <table class="table1">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Název</th>
+                    <th>Sporty</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in facilities)
+                {
+                    <tr>
+                        <td>@f.Id</td>
+                        <td>@f.Name</td>
+                        <td>
+                            @foreach (var s in f.Sports)
+                            {
+                                <span class="badge">@s.Name</span>
+                            }
+                        </td>
+                        <td>
+                            <NavLink href="@($"/facility/{f.Id}")" class="button2">Detail</NavLink>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    List<FacilityResponseDto>? facilities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+    }
+}

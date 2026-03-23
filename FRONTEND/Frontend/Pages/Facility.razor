@@ -1,0 +1,148 @@
+﻿@page "/facility/{id:int}"
+@using Frontend.DTO
+@inject HttpClient Http
+
+
+@if (facility == null)
+{
+    <p>Načítám...</p>
+}
+else
+{
+    <div class="card">
+        @if (venue != null)
+        {
+            <h2 style="color: var(--color-text);">@facility.Name</h2>
+            <p><b>Areál:</b> @venue.Name</p>
+
+            @if (!string.IsNullOrEmpty(venue.Address) || !string.IsNullOrEmpty(venue.City))
+            {
+                <p>
+                    <b>Adresa:</b>
+                    @venue.Address
+                    @if (!string.IsNullOrEmpty(venue.City))
+                    {
+                        <span>, @venue.City</span>
+                    }
+                </p>
+            }
+        }
+        <hr />
+        <h5>Sporty:</h5>
+        <div>
+            @foreach (var s in facility.Sports)
+            {
+                <span class="badge">@s.Name</span>
+            }
+        </div>
+        <hr />
+        <h5>Ceník:</h5>
+
+        @if (prices == null)
+        {
+            <p>Načítám ceny...</p>
+        }
+        else if (!prices.Any())
+        {
+            <p>Žádné ceny k dispozici</p>
+        }
+        else
+        {
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>Sport</th>
+                        <th>Členství</th>
+                        <th>Cena / hod</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in prices)
+                    {
+                        <tr>
+                            <td>
+                                @{
+                                    var sportName = facility.Sports.FirstOrDefault(s => s.Id == p.SportId)?.Name ?? "Neznámý";
+                                }
+                                @sportName
+                            </td>
+
+                            <td>
+                                <span class="badge @(p.Membership == "PREMIUM" ? "badge-vip" : "badge-basic")">
+                                    @p.Membership
+                                </span>
+                            </td>
+
+                            <td>@p.PricePerHour @p.Currency</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <hr />
+        <NavLink href="@($"/reservation?facilityId={Id}")" class="button2">
+            Pokračovat k rezervaci <i class="fa-solid fa-arrow-right"></i>
+        </NavLink>
+        <hr />
+        <h5>Aktuální Rezervace:</h5>
+
+        @if (reservations == null)
+        {
+            <p>Načítám rezervace...</p>
+        }
+        else if (!reservations.Any())
+        {
+            <p>Žádné rezervace</p>
+        }
+        else
+        {
+            <table class="table1">
+                <thead>
+                    <tr>
+                        <th>Od</th>
+                        <th>Do</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in reservations)
+                    {
+                        <tr>
+                            <td>@r.StartAt.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@r.EndAt.ToString("dd.MM.yyyy HH:mm")</td>
+
+                            <td>
+                                <span class="badge">
+                                    @r.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    FacilityResponseDto? facility;
+    List<PriceListResponseDto>? prices;
+    VenueResponseDto? venue;
+    List<ReservationResponseDto>? reservations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allFacilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+        facility = allFacilities.FirstOrDefault(f => f.Id == Id);
+
+        prices = await Http.GetFromJsonAsync<List<PriceListResponseDto>>($"facilities/{Id}/prices")?? new List<PriceListResponseDto>();
+
+        var venues = await Http.GetFromJsonAsync<List<VenueResponseDto>>("venues")?? new List<VenueResponseDto>();
+        venue = venues.FirstOrDefault(v => v.Id == facility?.VenueId);
+
+        reservations = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"facilities/{Id}/reservations")?? new List<ReservationResponseDto>();
+    }
+}

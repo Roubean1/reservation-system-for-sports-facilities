@@ -1,0 +1,70 @@
+﻿@page "/"
+@inject NavigationManager Nav
+
+<div class="home-page">
+    <div class="text-and-image-card">
+        <div style="flex: 1; margin: 25px;">
+            <h1>Rezervujte sportoviště během pár sekund!</h1>
+            <p>Najděte svůj oblíbený sport, vyberte sportoviště a rezervujte si čas bez zbytečných kliků.</p>
+            <p>Vše pohodlně online.</p>
+            <button class="button2" style="width: 200px; margin-top: 25px;" @onclick="@(() => Nav.NavigateTo("/reservation"))">
+                Rezervovat nyní
+            </button>
+        </div>
+        <div style="width: 400px;">
+            <img src="imgs/sportovisteUvod.jpg" style="max-width: 400px; border-radius:var(--radius);" />
+        </div>
+    </div>
+
+
+
+
+
+    <div class="text-and-image-card">
+        <div style="flex: 1; margin: 25px;">
+            <h1>Půjčení vybavení</h1>
+            <p>Ušetřete čas a připravte se na hru bez starostí. Půjčte si vybavení přímo při rezervaci.</p>
+            <p>Otevřete si seznam dostupného vybavení.</p>
+            <button class="button2" style="width: 200px; margin-top: 25px;" @onclick="@(() => Nav.NavigateTo("/equipment"))">
+                Zobrazit vybavení
+            </button>
+        </div>
+        <div style="width: 400px;">
+            <img src="imgs/vybaveniUvod.jpg" style="max-width: 400px; border-radius:var(--radius);" />
+        </div>
+    </div>
+
+
+
+
+
+    <div class="text-and-image-card" style="background: var(--color-primary); padding: 25px; display: flex; gap: 20px;">
+        <div style="flex: 2;">
+            <h1>Výhody členství</h1>
+            <p>Tady by mohly být popsané nějaké základní výhody všech členství.</p>
+        </div>
+
+        <div style="flex: 3; display: flex; gap: 20px; justify-content: flex-start;">
+            <div class="subscription">
+                <div style="font-size:22px;">Členství 1</div>
+                <div style="margin-top:5px; color: var(--color2); font-size:14px;">hmmmmm tady budou cool věci.</div>
+                <div style="margin:20px 0px 10px 0px;">
+                    <span style="font-size:48px;">300</span>
+                    <span style="color: var(--color2)">kč / m</span>
+                </div>
+                <button class="button2">Get</button>
+            </div>
+
+            <div class="subscription">
+                <div style="font-size:22px;">Členství 2</div>
+                <div style="margin-top:5px; color: var(--color2); font-size:14px;">hmmmmm tady budou cool věci.</div>
+                <div style="margin:20px 0px 10px 0px;">
+                    <span style="font-size:48px;">600</span>
+                    <span style="color: var(--color2)">kč / m</span>
+                </div>
+                <button class="button2">Get</button>
+            </div>
+        </div>
+    </div>
+
+</div>
