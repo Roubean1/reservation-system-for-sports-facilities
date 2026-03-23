@@ -99,7 +99,8 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 FullName = dto.FullName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 CreatedAt = DateTime.UtcNow,
-                Membership = "standard"
+                Membership = "STANDART",
+                RoleId = 3
             };
 
             _context.Users.Add(user);
