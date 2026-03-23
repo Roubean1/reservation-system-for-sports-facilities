@@ -1,7 +1,28 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|c:\\users\\matej\\documents\\\u0161kola\\reservation-system-for-sports-facilities\\frontend\\frontend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|solutionrelative:frontend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|c:\\users\\matej\\documents\\\u0161kola\\reservation-system-for-sports-facilities\\frontend\\frontend\\pages\\rezervation.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|solutionrelative:frontend\\pages\\rezervation.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|c:\\users\\matej\\documents\\\u0161kola\\reservation-system-for-sports-facilities\\frontend\\frontend\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|solutionrelative:frontend\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|c:\\users\\matej\\documents\\\u0161kola\\reservation-system-for-sports-facilities\\frontend\\frontend\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|solutionrelative:frontend\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|c:\\users\\matej\\documents\\\u0161kola\\reservation-system-for-sports-facilities\\frontend\\frontend\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{90CF18BE-437A-4804-9E85-213B3EBFA1C5}|Frontend\\Frontend.csproj|solutionrelative:frontend\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -22,6 +43,71 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\Program.cs",
+              "RelativeDocumentMoniker": "Frontend\\Program.cs",
+              "ToolTip": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\Program.cs",
+              "RelativeToolTip": "Frontend\\Program.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA8AAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-23T12:42:17.977Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Rezervation.razor",
+              "DocumentMoniker": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\Pages\\Rezervation.razor",
+              "RelativeDocumentMoniker": "Frontend\\Pages\\Rezervation.razor",
+              "ToolTip": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\Pages\\Rezervation.razor",
+              "RelativeToolTip": "Frontend\\Pages\\Rezervation.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAJcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-03-23T11:39:05.988Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "_Imports.razor",
+              "DocumentMoniker": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\_Imports.razor",
+              "RelativeDocumentMoniker": "Frontend\\_Imports.razor",
+              "ToolTip": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\_Imports.razor",
+              "RelativeToolTip": "Frontend\\_Imports.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-03-23T11:38:59.564Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "App.razor",
+              "DocumentMoniker": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\App.razor",
+              "RelativeDocumentMoniker": "Frontend\\App.razor",
+              "ToolTip": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\App.razor",
+              "RelativeToolTip": "Frontend\\App.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-03-23T11:38:56.707Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\AuthService.cs",
+              "RelativeDocumentMoniker": "Frontend\\AuthService.cs",
+              "ToolTip": "C:\\Users\\matej\\Documents\\\u0160kola\\reservation-system-for-sports-facilities\\FRONTEND\\Frontend\\AuthService.cs",
+              "RelativeToolTip": "Frontend\\AuthService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-23T11:38:35.56Z",
+              "EditorCaption": ""
             }
           ]
         }

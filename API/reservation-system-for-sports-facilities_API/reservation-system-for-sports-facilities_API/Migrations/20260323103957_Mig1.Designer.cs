@@ -11,8 +11,8 @@ using reservation_system_for_sports_facilities_API;
 namespace reservation_system_for_sports_facilities_API.Migrations
 {
     [DbContext(typeof(AppDataContext))]
-    [Migration("20260316104319_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260323103957_Mig1")]
+    partial class Mig1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -187,6 +187,21 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.ToTable("Reservations");
                 });
 
+            modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Sport", b =>
                 {
                     b.Property<int>("Id")
@@ -207,6 +222,9 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Answer")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -260,7 +278,12 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -403,6 +426,17 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.User", b =>
+                {
+                    b.HasOne("reservation_system_for_sports_facilities_API.Models.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Equipment", b =>
                 {
                     b.Navigation("Rentals");
@@ -413,6 +447,11 @@ namespace reservation_system_for_sports_facilities_API.Migrations
                     b.Navigation("PriceLists");
 
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("reservation_system_for_sports_facilities_API.Models.User", b =>

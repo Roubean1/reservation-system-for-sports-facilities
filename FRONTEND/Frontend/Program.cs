@@ -13,7 +13,7 @@ namespace Frontend
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
             builder.Services.AddScoped(sp => new HttpClient { 
-                BaseAddress = new Uri("http://localhost:5036/api/") 
+                BaseAddress = new Uri("https://localhost:7169/api/") 
             });
 
             builder.Services.AddBlazoredLocalStorage();

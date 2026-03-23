@@ -7,6 +7,7 @@ namespace reservation_system_for_sports_facilities_API
     {
         public AppDataContext(DbContextOptions<AppDataContext> options) : base(options) { }
 
+        public DbSet<Role> Roles => Set<Role>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Venue> Venues => Set<Venue>();
         public DbSet<Sport> Sports => Set<Sport>();

@@ -1058,9 +1058,6 @@ C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEN
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\rglrlf3suv-{0}-tptq2av103-tptq2av103.gz
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\95yjt5zs2a-{0}-lfu7j35m59-lfu7j35m59.gz
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\5wmqqex3jb-{0}-oyz0vx2fzb-oyz0vx2fzb.gz
-C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\qrv5vy98t0-{0}-44ko22e2ou-44ko22e2ou.gz
-C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\sk6s2r62yc-{0}-ztxxudzit9-ztxxudzit9.gz
-C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\njn95cf9xo-{0}-1uf2rmuzad-1uf2rmuzad.gz
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\staticwebassets.development.json
@@ -1072,3 +1069,6 @@ C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEN
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\refint\Frontend.dll
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\Frontend.pdb
 C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\ref\Frontend.dll
+C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\qrv5vy98t0-{0}-l7x34112vh-l7x34112vh.gz
+C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\sk6s2r62yc-{0}-meny2q1qp7-meny2q1qp7.gz
+C:\Users\matej\Documents\Škola\reservation-system-for-sports-facilities\FRONTEND\Frontend\obj\Debug\net8.0\compressed\njn95cf9xo-{0}-y5r5ka2bd5-y5r5ka2bd5.gz

@@ -150,6 +150,7 @@
                 Content = JsonContent.Create(dto)
             };
 
+            token = token?.Trim('"');
             request.Headers.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
