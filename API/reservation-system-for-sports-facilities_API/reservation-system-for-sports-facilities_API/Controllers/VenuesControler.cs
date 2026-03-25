@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -57,6 +58,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
         //Endpointy pro admina
         //Vytvoření
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<VenueResponseDto>> CreateVenue(CreateVenueRequestDto dto)
         {
@@ -82,6 +84,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         //Editace
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateVenue(int id, CreateVenueRequestDto dto)
         {
@@ -109,6 +112,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Smazání 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVenue(int id)
         {
@@ -126,6 +130,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
 
         // Získání vybavení konrétního areálu
+        [Authorize(Roles = "Admin")]
         [HttpGet("{venueId}/equipments")]
         public async Task<ActionResult<IEnumerable<EquipmentResponseDto>>> GetEquipmentByVenue(int venueId)
         {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -31,25 +32,28 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<FacilityResponseDto>> CreateFacility(CreateFacilityRequestDto dto)
         {
             var venue = await _context.Venues.FindAsync(dto.VenueId);
-            var sport = await _context.Sports.FindAsync(dto.SportId);
+            if (venue == null) return BadRequest("Zadané VenueId neexistuje.");
 
-            if (venue == null || sport == null)
+            var sports = await _context.Sports
+                .Where(s => dto.SportIds.Contains(s.Id))
+                .ToListAsync();
+
+            if (sports.Count == 0)
             {
-                return BadRequest("Zadané VenueId nebo SportId neexistuje.");
+                return BadRequest("Nebyl nalezen žádný platný sport pro zadaná ID.");
             }
 
             var facility = new Facility
             {
                 Name = dto.Name,
-                VenueId = dto.VenueId
+                VenueId = dto.VenueId,
+                Sports = sports
             };
-
-            // Přidání sportu do M:N kolekce (EF Core se postará o tabulku facility_sports)
-            facility.Sports.Add(sport);
 
             _context.Facilities.Add(facility);
             await _context.SaveChangesAsync();
@@ -59,12 +63,13 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 Id = facility.Id,
                 Name = facility.Name,
                 VenueId = facility.VenueId,
-                Sports = new List<SportDto> { new SportDto { Id = sport.Id, Name = sport.Name } }
+                Sports = facility.Sports.Select(s => new SportDto { Id = s.Id, Name = s.Name }).ToList()
             };
 
             return CreatedAtAction(nameof(GetFacilities), new { id = facility.Id }, response);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFacility(int id, CreateFacilityRequestDto dto)
         {
@@ -85,6 +90,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFacility(int id)
         {
@@ -115,6 +121,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+        [Authorize]
         [HttpGet("{facilityId}/reservations")]
         public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetReservationsByFacility(int facilityId)
         {

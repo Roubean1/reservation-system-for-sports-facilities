@@ -10,4 +10,12 @@
         public string Status { get; set; } = "OPEN";
         public DateTime CreatedAt { get; set; }
     }
+
+    public class CreateSupportTicketRequestDto
+    {
+        public int? UserId { get; set; }
+        public string? Email { get; set; }
+        public string Subject { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
 }

@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace reservation_system_for_sports_facilities_API.Controllers
 {
@@ -28,6 +29,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<SportDto>> CreateSport(SportDto dto)
         {
@@ -43,6 +45,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return CreatedAtAction(nameof(GetSports), new { id = sport.Id }, dto);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSport(int id, SportDto dto)
         {
@@ -55,7 +58,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return NoContent();
         }
 
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSport(int id)
         {

@@ -1,4 +1,5 @@
 ﻿using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,14 +26,18 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
         private string CreateToken(User user)
         {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("Membership", user.Membership)
-            };
+            // Získání názvu role, nebo "Customer" jako fallback, pokud by Include selhalo
+            string roleName = user.Role?.Name ?? "Customer";
 
-            // Key in appsettings.json
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Name, user.FullName ?? string.Empty),
+        new Claim(ClaimTypes.Role, roleName), // Teď už user.Role.Name nezpůsobí pád
+        new Claim("Membership", user.Membership)
+    };
+
             var keyStr = _config["Jwt:Key"];
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
@@ -40,7 +45,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7), // Platnost 7 dní
+                Expires = DateTime.Now.AddDays(7),
                 SigningCredentials = creds
             };
 
@@ -51,6 +56,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // všechny účty
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
         {
@@ -66,6 +72,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Detail účtu
+        [Authorize]
         [HttpGet("{id:int}")]
         public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
@@ -118,6 +125,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Editace
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, CreateUserRequestDto dto)
         {
@@ -140,23 +148,33 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login(LoginRequestDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            // PŘIDÁNO .Include(u => u.Role), aby user.Role nebyl null
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
                 return Unauthorized("Neplatný email nebo heslo.");
             }
 
-            var token = CreateToken(user); // Pomocná metoda pro generování JWT
+            var token = CreateToken(user);
 
             return Ok(new
             {
                 Token = token,
-                User = new UserResponseDto { Id = user.Id, Email = user.Email, FullName = user.FullName, Membership = user.Membership }
+                User = new UserResponseDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Membership = user.Membership
+                }
             });
         }
 
         //Získání všech rezervací uživatele
+        [Authorize]
         [HttpGet("{id}/reservations")]
         public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetUserReservations(int id)
         {
@@ -184,6 +202,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Získání zapůjček uživatele
+        [Authorize]
         [HttpGet("{userId}/equipmentrentals")]
         public async Task<ActionResult<IEnumerable<EquipmentRentalResponseDto>>> GetUserRentals(int userId)
         {
@@ -204,7 +223,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
-
+        [Authorize]
         [HttpGet("{userId}/SupportTickets")]
         public async Task<ActionResult<IEnumerable<SupportTicketResponseDto>>> GetUserTickets(int userId)
         {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -16,11 +17,19 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context = context;
         }
 
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<SupportTicketResponseDto>> CreateTicket(SupportTicket ticket)
+        public async Task<ActionResult<SupportTicketResponseDto>> CreateTicket(CreateSupportTicketRequestDto dto)
         {
-            ticket.CreatedAt = DateTime.UtcNow;
-            ticket.Status = "OPEN";
+            var ticket = new SupportTicket
+            {
+                UserId = dto.UserId,
+                Email = dto.Email,
+                Subject = dto.Subject,
+                Message = dto.Message,
+                CreatedAt = DateTime.UtcNow,
+                Status = "OPEN"
+            };
 
             _context.SupportTickets.Add(ticket);
             await _context.SaveChangesAsync();
@@ -39,6 +48,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return CreatedAtAction(nameof(GetTickets), new { id = ticket.Id }, response);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SupportTicketResponseDto>>> GetTickets()
         {
@@ -57,6 +67,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTicket(int id)
         {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -18,6 +19,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
 
         // Add new price
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPost]
         public async Task<ActionResult<PriceListResponseDto>> CreatePrice(CreatePriceListRequestDto dto)
         {
@@ -56,6 +58,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // update price
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdatePrice(int id, CreatePriceListRequestDto dto)
         {
@@ -73,6 +76,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // delete price
+        [Authorize(Roles = "Admin,Employee")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePrice(int id)
         {

@@ -17,6 +17,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             _context = context;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetReservations()
         {
@@ -103,6 +104,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         //Change rezervation status to cancelled
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> CancelReservation(int id)
         {
@@ -117,6 +119,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
 
 
         //Get rentals
+        [Authorize]
         [HttpGet("{id}/equipmentrentals")]
         public async Task<ActionResult<IEnumerable<object>>> GetRentalsByReservation(int id)
         {

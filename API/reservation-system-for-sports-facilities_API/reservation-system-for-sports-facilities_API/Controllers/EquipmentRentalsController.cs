@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -17,6 +18,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Get All
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetRentals()
         {
@@ -39,6 +41,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
         }
 
         // Create rental
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<object>> CreateRental(CreateRentalRequestDto dto)
         {
@@ -90,7 +93,7 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return CreatedAtAction(nameof(GetRentals), new { id = rental.Id }, response);
         }
 
-
+        [Authorize]
         //delete rental
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRental(int id)

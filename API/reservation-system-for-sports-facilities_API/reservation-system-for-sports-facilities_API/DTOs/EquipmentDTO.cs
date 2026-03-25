@@ -7,4 +7,12 @@
         public int QuantityAvailable { get; set; }
         public decimal PricePerHour { get; set; }
     }
+
+    public class CreateEquipmentRequestDto
+    {
+        public int VenueId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal PricePerHour { get; set; }
+    }
 }

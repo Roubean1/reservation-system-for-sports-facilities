@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using reservation_system_for_sports_facilities_API.DTOs;
 using reservation_system_for_sports_facilities_API.Models;
@@ -31,13 +32,21 @@ namespace reservation_system_for_sports_facilities_API.Controllers
                 .ToListAsync();
         }
 
-        //Add equipment
+        // Přidání vybavení
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPost]
-        public async Task<ActionResult<EquipmentResponseDto>> CreateEquipment(Equipment equipment)
+        public async Task<ActionResult<EquipmentResponseDto>> CreateEquipment(CreateEquipmentRequestDto dto)
         {
-            // Validace existence areálu
-            var venueExists = await _context.Venues.AnyAsync(v => v.Id == equipment.VenueId);
+            var venueExists = await _context.Venues.AnyAsync(v => v.Id == dto.VenueId);
             if (!venueExists) return BadRequest("Zadané VenueId neexistuje.");
+
+            var equipment = new Equipment
+            {
+                VenueId = dto.VenueId,
+                Name = dto.Name,
+                Quantity = dto.Quantity,
+                PricePerHour = dto.PricePerHour
+            };
 
             _context.Equipments.Add(equipment);
             await _context.SaveChangesAsync();
@@ -53,34 +62,27 @@ namespace reservation_system_for_sports_facilities_API.Controllers
             return CreatedAtAction(nameof(GetEquipments), new { id = equipment.Id }, response);
         }
 
-        // update
+        // Editace vybavení
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEquipment(int id, Equipment equipment)
+        public async Task<IActionResult> UpdateEquipment(int id, CreateEquipmentRequestDto dto)
         {
-            if (id != equipment.Id) return BadRequest();
-
             var existingEquipment = await _context.Equipments.FindAsync(id);
             if (existingEquipment == null) return NotFound();
 
-            existingEquipment.Name = equipment.Name;
-            existingEquipment.Quantity = equipment.Quantity;
-            existingEquipment.PricePerHour = equipment.PricePerHour;
-            existingEquipment.VenueId = equipment.VenueId;
+            var venueExists = await _context.Venues.AnyAsync(v => v.Id == dto.VenueId);
+            if (!venueExists) return BadRequest("Zadané VenueId neexistuje.");
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _context.Equipments.AnyAsync(e => e.Id == id)) return NotFound();
-                throw;
-            }
+            existingEquipment.Name = dto.Name;
+            existingEquipment.Quantity = dto.Quantity;
+            existingEquipment.PricePerHour = dto.PricePerHour;
+            existingEquipment.VenueId = dto.VenueId;
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
-
         // delete
+        [Authorize(Roles = "Admin,Employee")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEquipment(int id)
         {
