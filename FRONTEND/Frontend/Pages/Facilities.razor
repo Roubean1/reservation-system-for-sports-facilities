@@ -1,53 +1,410 @@
 ﻿@page "/facilities"
 @using Frontend.DTO
+@using System.Net.Http.Json
 @inject HttpClient Http
 
-<div class="card">
+<div class="facilities-page">
+    <div class="facilities-container">
 
-    <h1>Sportoviště</h1>
+        @* HEADER *@
+        <div class="header-section">
+            <h1 class="main-title">Sportoviště</h1>
+            <p class="sub-title">Najděte si ideální místo pro váš trénink nebo zápas.</p>
+        </div>
 
-    @if (facilities == null)
-    {
-        <p>Načítám...</p>
-    }
-    else
-    {
-        <table class="table1">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Název</th>
-                    <th>Sporty</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var f in facilities)
-                {
-                    <tr>
-                        <td>@f.Id</td>
-                        <td>@f.Name</td>
-                        <td>
-                            @foreach (var s in f.Sports)
-                            {
-                                <span class="badge">@s.Name</span>
-                            }
-                        </td>
-                        <td>
-                            <NavLink href="@($"/facility/{f.Id}")" class="button2">Detail</NavLink>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+        @* COMPACT FILTER *@
+        @if (allSports != null && allSports.Any())
+        {
+            <div class="filter-container">
+                <span class="filter-label">Filtrovat podle sportu:</span>
+                <div class="filter-chips">
+                    <button class="filter-chip @(selectedSportId == 0 ? "active" : "")"
+                            @onclick="() => FilterBySport(0)">
+                        Vše
+                    </button>
+                    @foreach (var sport in allSports)
+                    {
+                        <button class="filter-chip @(selectedSportId == sport.Id ? "active" : "")"
+                                @onclick="() => FilterBySport(sport.Id)">
+                            @sport.Name
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+
+        @* FACILITIES LIST *@
+        @if (facilities == null)
+        {
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Načítám sportoviště...</p>
+            </div>
+        }
+        else
+        {
+            @* Filtrujeme seznam na základě vybraného sportu *@
+            var filteredFacilities = selectedSportId == 0
+            ? facilities
+            : facilities.Where(f => f.Sports.Any(s => s.Id == selectedSportId)).ToList();
+
+            @if (!filteredFacilities.Any())
+            {
+                <div class="empty-state-card shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <h3>Žádné sportoviště nenalezeno</h3>
+                    <p>Zkuste vybrat jiný sport nebo zrušit filtr.</p>
+                </div>
+            }
+            else
+            {
+                <div class="facilities-list">
+                    @foreach (var f in filteredFacilities)
+                    {
+                        <div class="facility-row-card shadow-sm">
+                            <div class="facility-row-body">
+                                @* 1. NÁZEV A INFO *@
+                                <div class="facility-main-info">
+                                    <div class="facility-header">
+                                        <h3>@f.Name</h3>
+                                        <span class="id-badge">#@f.Id</span>
+                                    </div>
+                                    <p class="facility-description">Špičkově udržované prostory s moderním vybavením a zázemím pro sportovce.</p>
+                                </div>
+
+                                @* 2. SPORTY *@
+                                <div class="facility-sports">
+                                    <label>Dostupné sporty:</label>
+                                    <div class="sport-badges">
+                                        @foreach (var s in f.Sports)
+                                        {
+                                            <span class="sport-badge">@s.Name</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                @* 3. AKCE *@
+                                <div class="facility-action">
+                                    <div class="action-buttons">
+                                        <NavLink href="@($"/facility/{f.Id}")" class="btn-detail">
+                                            Detail
+                                        </NavLink>
+                                        <NavLink href="@($"/reservation?facilityId={f.Id}")" class="btn-reservation">
+                                            Rezervovat
+                                        </NavLink>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
 </div>
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .facilities-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+        color: var(--text-main);
+    }
+
+    .facilities-container {
+        width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Header */
+    .header-section {
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--brand-dark);
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+    }
+
+    /* Compact Filter Styling */
+    .filter-container {
+        margin-bottom: 2.5rem;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-chip {
+        background: #f1f5f9;
+        border: 1px solid transparent;
+        color: var(--text-main);
+        padding: 0.35rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .filter-chip:hover {
+            background: #e2e8f0;
+        }
+
+        .filter-chip.active {
+            background: var(--brand);
+            color: white;
+            border-color: var(--brand);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+    /* List Layout */
+    .facilities-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* Row Card */
+    .facility-row-card {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        transition: border-color 0.2s, transform 0.2s;
+    }
+
+        .facility-row-card:hover {
+            border-color: var(--brand);
+            transform: translateX(5px);
+        }
+
+    .facility-row-body {
+        display: grid;
+        grid-template-columns: 1.5fr 1.5fr 1.2fr;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        gap: 2rem;
+    }
+
+    .facility-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+        .facility-header h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--brand-dark);
+        }
+
+    .id-badge {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        font-weight: 600;
+        background: #f1f5f9;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+
+    .facility-description {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .facility-sports label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 0.6rem;
+        letter-spacing: 0.5px;
+    }
+
+    .sport-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .sport-badge {
+        background: #f0f7ff;
+        color: var(--brand);
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid #dbeafe;
+    }
+
+    .facility-action {
+        text-align: right;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .btn-detail {
+        background: #f1f5f9;
+        color: var(--text-main);
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+        .btn-detail:hover {
+            background: #e2e8f0;
+        }
+
+    .btn-reservation {
+        background: var(--brand);
+        color: white;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+        .btn-reservation:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+
+    .loading-state, .empty-state-card {
+        text-align: center;
+        padding: 4rem;
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+    }
+
+        .empty-state-card i {
+            font-size: 2.5rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--brand);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 850px) {
+        .facility-row-body {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .sport-badges, .action-buttons, .filter-container {
+            justify-content: center;
+        }
+
+        .filter-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .facilities-container {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
     List<FacilityResponseDto>? facilities;
+    List<SportDto> allSports = new();
+    int selectedSportId = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+        try
+        {
+            facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities") ?? new();
+
+            // Extrahujeme unikátní sporty ze všech sportovišť pro filtr
+            allSports = facilities
+                .SelectMany(f => f.Sports)
+                .GroupBy(s => s.Id)
+                .Select(g => g.First())
+                .OrderBy(s => s.Name)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data Load Error: " + ex.Message);
+            facilities = new();
+        }
+    }
+
+    private void FilterBySport(int id)
+    {
+        selectedSportId = id;
     }
 }

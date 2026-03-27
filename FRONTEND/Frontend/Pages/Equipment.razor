@@ -1,0 +1,275 @@
+﻿@page "/equipment"
+@using Frontend.DTO
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="equipment-page">
+    <div class="equipment-container">
+
+        @* HEADER *@
+        <div class="header-section">
+            <i class="fa-solid fa-table-tennis-paddle-ball header-icon"></i>
+            <div>
+                <h1 class="main-title">Půjčovna vybavení</h1>
+                <p class="sub-title">Profesionální vybavení pro váš trénink k zapůjčení přímo v areálu.</p>
+            </div>
+        </div>
+
+        @* INFO PANEL *@
+        <div class="info-banner shadow-sm">
+            <i class="fa-solid fa-circle-info"></i>
+            <p>Vybavení si můžete zarezervovat online společně se sportovištěm. Ceny jsou konečné za 1 hodinu zápůjčky.</p>
+        </div>
+
+        @* EQUIPMENT GRID *@
+        @if (equipmentList == null)
+        {
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Načítám katalog...</p>
+            </div>
+        }
+        else if (!equipmentList.Any())
+        {
+            <div class="empty-state-card">
+                <i class="fa-solid fa-box-open"></i>
+                <h3>Katalog je momentálně prázdný</h3>
+            </div>
+        }
+        else
+        {
+            <div class="equipment-grid">
+                @foreach (var item in equipmentList)
+                {
+                    <div class="equipment-card shadow-sm">
+                        <div class="card-image-container">
+                            @* Tady se použije buď tvoje nahraná fotka, nebo automatický název *@
+                            <img src="@GetEquipmentImage(item.Name)"
+                                 onerror="this.src='imgs/logo.png'; this.className='placeholder-img';"
+                                 alt="@item.Name" />
+                        </div>
+
+                        <div class="card-content">
+                            <div class="item-header">
+                                <h3>@item.Name</h3>
+                                <div class="stock-indicator">
+                                    <span class="dot @(item.QuantityAvailable > 0 ? "online" : "offline")"></span>
+                                    @(item.QuantityAvailable > 0 ? "Skladem" : "Vypůjčeno")
+                                </div>
+                            </div>
+
+                            <p class="item-description">Kvalitní sportovní náčiní pravidelně servisované pro maximální komfort při hře.</p>
+
+                            <div class="item-footer">
+                                <div class="price-tag">
+                                    <span class="price">@($"{item.PricePerHour:N0}") Kč</span>
+                                    <span class="unit">/ hod</span>
+                                </div>
+                                <div class="btn-info-badge">
+                                    Dostupné u rezervace
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .equipment-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+    }
+
+    .equipment-container {
+        width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .header-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+        color: var(--brand);
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--brand-dark);
+        letter-spacing: -0.5px;
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+    }
+
+    .info-banner {
+        background: #eff6ff;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid #dbeafe;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 3rem;
+        color: #1e40af;
+        font-size: 0.95rem;
+    }
+
+    .equipment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .equipment-card {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+        .equipment-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--brand);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+
+    .card-image-container {
+        height: 220px;
+        background: white;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .card-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .card-content {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .item-header h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+        .dot.online {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        .dot.offline {
+            background: #ef4444;
+        }
+
+    .price {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--brand);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: auto;
+    }
+
+    @@keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+@code {
+    private List<EquipmentResponseDto> equipmentList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            equipmentList = await Http.GetFromJsonAsync<List<EquipmentResponseDto>>("equipments");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+            equipmentList = new List<EquipmentResponseDto>();
+        }
+    }
+
+    private string GetEquipmentImage(string itemName)
+    {
+        // Tady si můžeš nadefinovat vlastní cesty k těm vygenerovaným fotkám,
+        // pokud se názvy v databázi liší od názvů souborů.
+        var imageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Tenisová raketa", "imgs/tenis_raketa.png" },
+            { "Sada tenisových míčků", "imgs/tenis_micky.png" },
+            { "Squashová raketa", "imgs/squash_raketa.png" },
+            { "Badmintonová raketa", "imgs/badminton_raketa.png" },
+            { "Košíčky na badminton", "imgs/badminton_kosicky.png" },
+            { "Míč na volejbal", "imgs/volejbal_mic.png" },
+            { "Míč na basketbal", "imgs/basketball_mic.png" },
+            { "Míč na futsal", "imgs/futsal_mic.png" },
+            { "Pálka na stolní tenis", "imgs/stolni_tenis_palka.png" },
+            { "Rozlišovací dresy", "imgs/dresy.png" }
+        };
+
+        if (imageMap.TryGetValue(itemName, out var customPath))
+        {
+            return customPath;
+        }
+
+        // Pokud název v DB nenajde v mapě, zkusí vytvořit název automaticky (jako minule)
+        return "imgs/equipment/" + itemName.ToLower().Replace(" ", "-") + ".jpg";
+    }
+}

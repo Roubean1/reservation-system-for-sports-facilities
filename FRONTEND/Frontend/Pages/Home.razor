@@ -1,70 +1,274 @@
 ﻿@page "/"
+@page "/index"
 @inject NavigationManager Nav
 
 <div class="home-page">
-    <div class="text-and-image-card">
-        <div style="flex: 1; margin: 25px;">
-            <h1>Rezervujte sportoviště během pár sekund!</h1>
-            <p>Najděte svůj oblíbený sport, vyberte sportoviště a rezervujte si čas bez zbytečných kliků.</p>
-            <p>Vše pohodlně online.</p>
-            <button class="button2" style="width: 200px; margin-top: 25px;" @onclick="@(() => Nav.NavigateTo("/reservation"))">
-                Rezervovat nyní
+    @* 1. SEKCE: REZERVACE *@
+    <div class="hero-card shadow-sm">
+        <div class="hero-content">
+            <h1>Rezervujte sportoviště během pár sekund</h1>
+            <p>Najděte svůj oblíbený sport, vyberte si areál a rezervujte si přesný čas bez zbytečného papírování. Vše pohodlně a okamžitě online.</p>
+            <button class="btn-primary-modern" @onclick="@(() => Nav.NavigateTo("/reservation"))">
+                <i class="fa-solid fa-calendar-check mr-2"></i> Rezervovat nyní
             </button>
         </div>
-        <div style="width: 400px;">
-            <img src="imgs/sportovisteUvod.jpg" style="max-width: 400px; border-radius:var(--radius);" />
+        <div class="hero-image">
+            <img src="imgs/sportovisteUvod.jpg" alt="Sportoviště" />
         </div>
     </div>
 
-
-
-
-
-    <div class="text-and-image-card">
-        <div style="flex: 1; margin: 25px;">
+    @* 2. SEKCE: VYBAVENÍ *@
+    <div class="hero-card shadow-sm reverse">
+        <div class="hero-content">
             <h1>Půjčení vybavení</h1>
-            <p>Ušetřete čas a připravte se na hru bez starostí. Půjčte si vybavení přímo při rezervaci.</p>
-            <p>Otevřete si seznam dostupného vybavení.</p>
-            <button class="button2" style="width: 200px; margin-top: 25px;" @onclick="@(() => Nav.NavigateTo("/equipment"))">
-                Zobrazit vybavení
+            <p>Ušetřete čas a připravte se na hru bez starostí. Nemáte vlastní raketu nebo míč? Půjčte si profesionální vybavení přímo v našem areálu.</p>
+            <button class="btn-outline-modern" @onclick="@(() => Nav.NavigateTo("/equipment"))">
+                Zobrazit nabídku vybavení
             </button>
         </div>
-        <div style="width: 400px;">
-            <img src="imgs/vybaveniUvod.jpg" style="max-width: 400px; border-radius:var(--radius);" />
+        <div class="hero-image">
+            <img src="imgs/vybaveniUvod.jpg" alt="Vybavení" />
         </div>
     </div>
 
-
-
-
-
-    <div class="text-and-image-card" style="background: var(--color-primary); padding: 25px; display: flex; gap: 20px;">
-        <div style="flex: 2;">
+    @* 3. SEKCE: ČLENSTVÍ (PŘIZNANÝ KONCEPT) *@
+    <div class="membership-section shadow-sm">
+        <div class="membership-info">
             <h1>Výhody členství</h1>
-            <p>Tady by mohly být popsané nějaké základní výhody všech členství.</p>
+            <p>Připravujeme pro vás věrnostní program. Členové získají přednostní rezervace, slevy na pronájmy a přístup ke statistikám svých výkonů.</p>
+            <div class="coming-soon-badge">PŘIPRAVUJEME</div>
         </div>
 
-        <div style="flex: 3; display: flex; gap: 20px; justify-content: flex-start;">
-            <div class="subscription">
-                <div style="font-size:22px;">Členství 1</div>
-                <div style="margin-top:5px; color: var(--color2); font-size:14px;">hmmmmm tady budou cool věci.</div>
-                <div style="margin:20px 0px 10px 0px;">
-                    <span style="font-size:48px;">300</span>
-                    <span style="color: var(--color2)">kč / m</span>
+        <div class="membership-grid">
+            <div class="subscription-card locked">
+                <div class="sub-name">Standard</div>
+                <div class="sub-desc">Základní slevy na vybraná sportoviště a správa rezervací.</div>
+                <div class="sub-price">
+                    <span class="amount">290</span>
+                    <span class="currency">Kč / měsíc</span>
                 </div>
-                <button class="button2">Get</button>
+                <button class="btn-locked" disabled>Brzy dostupné</button>
             </div>
 
-            <div class="subscription">
-                <div style="font-size:22px;">Členství 2</div>
-                <div style="margin-top:5px; color: var(--color2); font-size:14px;">hmmmmm tady budou cool věci.</div>
-                <div style="margin:20px 0px 10px 0px;">
-                    <span style="font-size:48px;">600</span>
-                    <span style="color: var(--color2)">kč / m</span>
+            <div class="subscription-card locked highlighted">
+                <div class="sub-name">Premium</div>
+                <div class="sub-desc">Maximální slevy, půjčení vybavení zdarma a neomezené storno.</div>
+                <div class="sub-price">
+                    <span class="amount">590</span>
+                    <span class="currency">Kč / měsíc</span>
                 </div>
-                <button class="button2">Get</button>
+                <button class="btn-locked" disabled>Brzy dostupné</button>
             </div>
         </div>
     </div>
-
 </div>
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .home-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        gap: 4rem;
+    }
+
+    /* Společný styl pro karty */
+    .hero-card {
+        background: white;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+    }
+
+        .hero-card.reverse {
+            flex-direction: row-reverse;
+        }
+
+    .hero-content {
+        flex: 1;
+        padding: 3rem;
+    }
+
+        .hero-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: var(--brand-dark);
+            line-height: 1.2;
+        }
+
+        .hero-content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+    .hero-image {
+        flex: 1;
+        height: 400px;
+    }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    /* Tlačítka */
+    .btn-primary-modern {
+        background: var(--brand);
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-primary-modern:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+    .btn-outline-modern {
+        background: transparent;
+        color: var(--brand);
+        border: 2px solid var(--brand);
+        padding: 0.8rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-outline-modern:hover {
+            background: var(--brand);
+            color: white;
+        }
+
+    /* Členství */
+    .membership-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 3rem;
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 3rem;
+        border: 1px solid var(--border-soft);
+    }
+
+    .membership-info h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .membership-info p {
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .coming-soon-badge {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.4rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .membership-grid {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .subscription-card {
+        flex: 1;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        background: #fcfcfc;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .subscription-card.highlighted {
+            border-color: var(--brand);
+            background: #eff6ff;
+        }
+
+    .sub-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+
+    .sub-desc {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .sub-price {
+        margin-bottom: 1.5rem;
+    }
+
+        .sub-price .amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--brand-dark);
+        }
+
+        .sub-price .currency {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-left: 0.25rem;
+        }
+
+    .btn-locked {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 0.4rem;
+        font-weight: 600;
+        cursor: not-allowed;
+    }
+
+    /* Responzivita */
+    @@media (max-width: 900px) {
+        .hero-card, .hero-card.reverse, .membership-section {
+            flex-direction: column;
+            grid-template-columns: 1fr;
+        }
+
+        .hero-image {
+            height: 250px;
+            width: 100%;
+        }
+
+        .membership-grid {
+            flex-direction: column;
+        }
+    }
+</style>

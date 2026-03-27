@@ -1,191 +1,568 @@
 ﻿@page "/profile"
 @using Frontend.DTO
+@using System.Net.Http.Json
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IJSRuntime JS
 
-<div class="card">
-    <h1>Profil</h1>
+<div class="profile-page">
+    <div class="profile-container">
 
-    @if (user == null)
-    {
-        <p>Načítám...</p>
-    }
-    else
-    {
-        <!-- USER INFO -->
-        <h5>Osobní údaje</h5>
-
-        <div style="display: flex; flex-direction: column; gap:15px; max-width: 600px;">
-            <div class="row">
-                <p style="margin-bottom:0px; padding-bottom:0px">Email:</p>
-                <input @bind="editModel.Email" style="flex: 1; margin-top:0px;" />
-            </div>
-
-            <div class="row">
-                <p style="margin-bottom:0px; padding-bottom:0px">Jméno:</p>
-                <input style="flex: 1;margin-top:0px;" @bind="editModel.FullName" />
-            </div>
-
-            <div class="row">
-                <p style="margin-bottom:0px; padding-bottom:0px">Nové heslo:</p>
-                <input style="flex: 1;margin-top:0px;" type="password" placeholder="Nové heslo (nepovinné)" @bind="editModel.Password" />
-                <button class="button2" style="max-width:200px" @onclick="UpdateProfile">
-                    <i class="fa-solid fa-floppy-disk"></i> Uložit změny
-                </button>
-            </div>
+        @* HEADER SEKCE *@
+        <div class="header-section">
+            <h1 class="main-title">Můj profil</h1>
+            <p class="sub-title">Správa vašich údajů, rezervací a vypůjčeného vybavení.</p>
         </div>
 
-
-
-        <hr />
-
-        <!-- clenstvi -->
-        <h5>Membership:</h5>
-        <span class="badge @(@user.Membership == "PREMIUM" ? "badge-vip" : "badge-basic")" style="max-width:100px">
-            @user.Membership
-        </span>
-
-        <hr />
-
-
-        <!-- REZERVACE -->
-        <h5>Moje rezervace</h5>
-
-        @if (reservations == null)
+        @if (user == null)
         {
-            <p>Načítám rezervace...</p>
-        }
-        else if (!reservations.Any())
-        {
-            <p>Nemáš žádné rezervace</p>
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Načítám váš profil...</p>
+            </div>
         }
         else
         {
-            <table class="table1">
-                <thead>
-                    <tr>
-                        <th>Sportoviště</th>
-                        <th>Od</th>
-                        <th>Do</th>
-                        <th>Status</th>
-                        <th>Cena</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var r in reservations)
+            <div class="profile-grid">
+
+                @* 1. OSOBNÍ ÚDAJE *@
+                <div class="profile-card shadow-sm main-info">
+                    <div class="card-header-modern">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <h3>Osobní údaje</h3>
+                    </div>
+
+                    <div class="edit-form">
+                        <div class="input-field">
+                            <label>E-mail</label>
+                            <input @bind="editModel.Email" class="input-modern" placeholder="vas@email.cz" />
+                        </div>
+
+                        <div class="input-field">
+                            <label>Celé jméno</label>
+                            <input @bind="editModel.FullName" class="input-modern" placeholder="Jan Novák" />
+                        </div>
+
+                        <div class="input-field">
+                            <label>Nové heslo</label>
+                            <input type="password" @bind="editModel.Password" class="input-modern" placeholder="Ponechte prázdné pro beze změny" />
+                        </div>
+
+                        <div class="membership-info">
+                            <label>Typ členství</label>
+                            <span class="membership-pill @(user.Membership == "PREMIUM" ? "vip" : "basic")">
+                                <i class="fa-solid @(user.Membership == "PREMIUM" ? "fa-crown" : "fa-user")"></i>
+                                @user.Membership
+                            </span>
+                        </div>
+
+                        <button class="btn-save-profile" @onclick="UpdateProfile">
+                            <i class="fa-solid fa-floppy-disk"></i> Uložit změny
+                        </button>
+                    </div>
+                </div>
+
+                @* 2. MOJE REZERVACE *@
+                <div class="profile-card shadow-sm">
+                    <div class="card-header-modern">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <h3>Moje rezervace</h3>
+                    </div>
+
+                    @if (reservations == null || !reservations.Any())
                     {
-                        <tr>
-                            <td>@r.FacilityName</td>
-                            <td>@r.StartAt.ToString("g")</td>
-                            <td>@r.EndAt.ToString("g")</td>
-                            <td>@r.Status</td>
-                            <td>@r.TotalPrice Kč</td>
-                            <td>
-                                @if (r.Status != "CANCELLED")
-                                {
-                                    <button class="button2 btn-danger" @onclick="() => CancelReservation(r.Id)">
-                                        Zrušit
-                                    </button>
-                                }
-                                else
-                                {
-                                  
-                                }
-                            </td>
-                        </tr>
+                        <div class="empty-list-info">
+                            <p>Zatím nemáte žádné rezervace.</p>
+                            <a href="/reservation" class="btn-link">Vytvořit první rezervaci</a>
+                        </div>
                     }
-                </tbody>
-            </table>
-        }
-
-
-        <hr />
-
-
-        <!-- VYBAVENI -->
-        <h5>Vypujčené vybavení</h5>
-
-        @if (equipmentRentals == null)
-        {
-            <p>Načítám vybavení...</p>
-        }
-        else if (!equipmentRentals.Any())
-        {
-            <p>Nemáš žádné vypujčené vybavení</p>
-        }
-        else
-        {
-            <table class="table1">
-                <thead>
-                    <tr>
-                        <th>Název</th>
-                        <th>Od</th>
-                        <th>Do</th>
-                        <th>Množství</th>
-                        <th>K rezervaci</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var e in equipmentRentals)
+                    else
                     {
-                        <tr>
-                            <td>@e.EquipmentName</td>
-                            <td>@e.StartAt.ToString("g")</td>
-                            <td>@e.EndAt.ToString("g")</td>
-                            <td>@e.Qty</td>
-                            <td>@e.ReservationId</td>
-                        </tr>
+                        <div class="table-responsive">
+                            <table class="profile-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sportoviště</th>
+                                        <th>Termín</th>
+                                        <th>Status</th>
+                                        <th>Cena</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in reservations.OrderByDescending(x => x.StartAt))
+                                    {
+                                        var isPast = r.EndAt < DateTime.Now;
+                                        <tr class="@(isPast ? "row-past" : "")">
+                                            <td>
+                                                <strong>@r.FacilityName</strong>
+                                                @if (isPast)
+                                                {
+                                                    <span class="past-label">| Proběhlo</span>
+                                                }
+                                            </td>
+                                            <td class="text-small">
+                                                @r.StartAt.ToString("dd.MM. HH:mm")<br />
+                                                <span class="text-muted">@r.EndAt.ToString("HH:mm")</span>
+                                            </td>
+                                            <td>
+                                                @if (isPast)
+                                                {
+                                                    <span class="status-badge past">Dokončeno</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="status-badge @r.Status.ToLower()">@r.Status</span>
+                                                }
+                                            </td>
+                                            <td class="price-cell">@r.TotalPrice Kč</td>
+                                            <td class="action-cell">
+                                                @if (!isPast && r.Status != "CANCELLED" && r.StartAt > DateTime.Now)
+                                                {
+                                                    <button class="btn-cancel" @onclick="() => CancelReservation(r.Id)" title="Zrušit">
+                                                        <i class="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
-                </tbody>
-            </table>
-        }
+                </div>
 
+                @* 3. VYBAVENÍ *@
+                <div class="profile-card shadow-sm">
+                    <div class="card-header-modern">
+                        <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+                        <h3>Vypůjčené vybavení</h3>
+                    </div>
 
-        <hr />
-
-
-        <!-- SUPPORT -->
-        <h5>Support tickety</h5>
-
-        @if (supportTickets == null)
-        {
-            <p>Načítám tickety...</p>
-        }
-        else if (!supportTickets.Any())
-        {
-            <p>Žadné tickety</p>
-        }
-        else
-        {
-            <table class="table1">
-                <thead>
-                    <tr>
-                        <th>Předmět</th>
-                        <th>Zpráva</th>
-                        <th>Status</th>
-                        <th>Vytvořeno</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var s in supportTickets)
+                    @if (equipmentRentals == null || !equipmentRentals.Any())
                     {
-                        <tr>
-                            <td>@s.Subject</td>
-                            <td>@s.Message</td>
-                            <td>@s.Status</td>
-                            <td>@s.CreatedAt.ToString("g")</td>
-                        </tr>
+                        <div class="empty-list-info">
+                            <p>Nemáte žádné aktivní výpůjčky.</p>
+                        </div>
                     }
-                </tbody>
-            </table>
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vybavení</th>
+                                        <th>Množství</th>
+                                        <th>Od - Do</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var e in equipmentRentals.OrderByDescending(x => x.StartAt))
+                                    {
+                                        var isPast = e.EndAt < DateTime.Now;
+                                        <tr class="@(isPast ? "row-past" : "")">
+                                            <td>
+                                                <strong>@e.EquipmentName</strong>
+                                                @if (isPast)
+                                                {
+                                                    <span class="past-label">| Vráceno</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">@e.Qty ks</td>
+                                            <td class="text-small">
+                                                @e.StartAt.ToString("dd.MM.")<br />
+                                                @e.StartAt.ToString("HH:mm") – @e.EndAt.ToString("HH:mm")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                @* 4. SUPPORT *@
+                <div class="profile-card shadow-sm">
+                    <div class="card-header-modern">
+                        <i class="fa-solid fa-headset"></i>
+                        <h3>Support tickety</h3>
+                    </div>
+
+                    @if (supportTickets == null || !supportTickets.Any())
+                    {
+                        <div class="empty-list-info">
+                            <p>Žádné otevřené požadavky.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-table">
+                                <thead>
+                                    <tr>
+                                        <th>Předmět</th>
+                                        <th>Status</th>
+                                        <th>Vytvořeno</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var t in supportTickets)
+                                    {
+                                        <tr>
+                                            <td title="@t.Message"><strong>@t.Subject</strong></td>
+                                            <td><span class="status-badge info">@t.Status</span></td>
+                                            <td class="text-small">@t.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+            </div>
         }
-    }
+    </div>
 </div>
 
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+        --danger: #ef4444;
+    }
 
+    .profile-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+        color: var(--text-main);
+    }
 
+    .profile-container {
+        width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
 
+    /* Header */
+    .header-section {
+        margin-bottom: 2.5rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--brand-dark);
+        letter-spacing: -0.5px;
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+    }
+
+    /* Layout Grid */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    /* Cards */
+    .profile-card {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .profile-card.main-info {
+            grid-row: span 2;
+        }
+
+    .card-header-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--border-soft);
+        padding-bottom: 1rem;
+    }
+
+        .card-header-modern i {
+            font-size: 1.25rem;
+            color: var(--brand);
+        }
+
+        .card-header-modern h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--brand-dark);
+        }
+
+    /* Forms */
+    .edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .input-field label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.5px;
+    }
+
+    .input-modern {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-soft);
+        font-size: 0.95rem;
+        background: #fcfcfc;
+    }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: var(--brand);
+            background: white;
+        }
+
+    .membership-info {
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+    }
+
+    .membership-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
+        .membership-pill.vip {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .membership-pill.basic {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+    .btn-save-profile {
+        background: var(--brand);
+        color: white;
+        border: none;
+        padding: 0.8rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 1rem;
+    }
+
+        .btn-save-profile:hover {
+            background: #1d4ed8;
+        }
+
+    /* Tables */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .profile-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+        .profile-table th {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 2px solid var(--border-soft);
+            color: var(--text-light);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .profile-table td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--bg-page);
+            vertical-align: middle;
+        }
+
+    .text-small {
+        font-size: 0.8rem;
+        line-height: 1.3;
+    }
+
+    .price-cell {
+        font-weight: 700;
+        color: var(--brand-dark);
+    }
+
+    /* Badges */
+    .status-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+        .status-badge.confirmed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-badge.info {
+            background: #f1f5f9;
+            color: var(--text-light);
+        }
+
+    /* Action Buttons */
+    .btn-cancel {
+        background: white;
+        border: 1px solid #fee2e2;
+        color: var(--danger);
+        width: 32px;
+        height: 32px;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-cancel:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+    .empty-list-info {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-light);
+        font-style: italic;
+    }
+
+    .btn-link {
+        color: var(--brand);
+        text-decoration: none;
+        font-weight: 600;
+        display: block;
+        margin-top: 0.5rem;
+    }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+    .loading-state {
+        text-align: center;
+        padding: 5rem;
+    }
+
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--brand);
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    /* Styl pro historické řádky */
+    .row-past {
+        opacity: 0.6; /* Ztlumení celého řádku */
+        background-color: #fcfcfc;
+    }
+
+        .row-past td {
+            color: var(--text-light); /* Šedý text místo černého */
+        }
+
+        .row-past strong {
+            font-weight: 600; /* Méně výrazné tučné písmo */
+            color: var(--text-light);
+        }
+
+    /* Štítek "Proběhlo" vedle názvu */
+    .past-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-left: 0.5rem;
+        font-weight: 400;
+    }
+
+    /* Status badge pro dokončené věci */
+    .status-badge.past {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid var(--border-soft);
+    }
+
+    /* Zajištění, že cena u historie nekřičí */
+    .row-past .price-cell {
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* Hover efekt pro historii zrušíme nebo utlumíme */
+    .row-past:hover {
+        background-color: #f8fafc;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 1000px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-card.main-info {
+            grid-row: auto;
+        }
+
+        .profile-container {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
     UserResponseDto? user;
@@ -193,7 +570,6 @@
     List<ReservationResponseDto>? reservations;
     List<EquipmentRentalResponseDto>? equipmentRentals;
     List<SupportTicketResponseDto>? supportTickets;
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -203,36 +579,33 @@
         editModel.Email = user.Email;
         editModel.FullName = user.FullName;
 
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
         await LoadReservations();
         await LoadEquipmentRentals();
         await LoadSupportTickets();
     }
 
-
-
-
     async Task LoadReservations()
     {
         if (user == null) return;
-
-        reservations = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"users/{user.Id}/reservations") ?? new List<ReservationResponseDto>();
+        reservations = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"users/{user.Id}/reservations") ?? new();
     }
 
     async Task LoadEquipmentRentals()
     {
         if (user == null) return;
-        equipmentRentals = await Http.GetFromJsonAsync<List<EquipmentRentalResponseDto>>($"users/{user.Id}/equipmentrentals") ?? new List<EquipmentRentalResponseDto>();
+        equipmentRentals = await Http.GetFromJsonAsync<List<EquipmentRentalResponseDto>>($"users/{user.Id}/equipmentrentals") ?? new();
     }
 
     async Task LoadSupportTickets()
     {
         if (user == null) return;
-        supportTickets = await Http.GetFromJsonAsync<List<SupportTicketResponseDto>>($"users/{user.Id}/SupportTickets") ?? new List<SupportTicketResponseDto>();
+        supportTickets = await Http.GetFromJsonAsync<List<SupportTicketResponseDto>>($"users/{user.Id}/SupportTickets") ?? new();
     }
-
-
-
-
 
     async Task UpdateProfile()
     {
@@ -244,14 +617,10 @@
             if (user != null)
             {
                 await LocalStorage.SetItemAsync("user", user);
+                await JS.InvokeVoidAsync("alert", "Profil byl úspěšně aktualizován.");
             }
         }
     }
-
-
-
-
-
 
     async Task CancelReservation(int reservationId)
     {
@@ -265,8 +634,7 @@
         }
         else
         {
-            await JS.InvokeVoidAsync("alert", "Nepodařilo se zrušit rezervaci.");
+            await JS.InvokeVoidAsync("alert", "Nepodařilo se zrušit rezervaci. Možná je již po termínu pro zrušení.");
         }
     }
-    [Inject] IJSRuntime JS { get; set; } = default!;
 }

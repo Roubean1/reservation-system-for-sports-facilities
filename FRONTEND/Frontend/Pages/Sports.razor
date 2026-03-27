@@ -1,60 +1,272 @@
 ﻿@page "/sports"
 @using Frontend.DTO
+@using System.Net.Http.Json
 @inject HttpClient Http
 
-<div class="card">
-    <h1>Sporty</h1>
+<div class="sports-page">
+    <div class="sports-container">
 
-    @if (sports == null || facilities == null)
-    {
-        <p>Načítám...</p>
-    }
-    else
-    {
-        <table class="table1">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Sport</th>
-                    <th>Sportoviště</th>
-                </tr>
-            </thead>
-            <tbody>
+        @* HEADER *@
+        <div class="header-section">
+            <h1 class="main-title">Sporty</h1>
+            <p class="sub-title">Přehled nabízených sportovních aktivit v našich areálech. Vyberte si sport a podívejte se na dostupná sportoviště.</p>
+        </div>
+
+        @* SPORTS LIST *@
+        @if (sports == null || facilities == null)
+        {
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Načítám sporty...</p>
+            </div>
+        }
+        else
+        {
+            <div class="sports-list">
                 @foreach (var s in sports)
                 {
-                    <tr>
-                        <td>@s.Id</td>
-                        <td>@s.Name</td>
+                    var relatedFacilities = facilities
+                    .Where(f => f.Sports.Any(sp => sp.Id == s.Id))
+                    .ToList();
 
+                    <div class="sport-row-card shadow-sm">
+                        @* OBRÁZEK *@
+                        <div class="sport-image-container">
+                            @* Použije namapovaný obrázek nebo vygeneruje název automaticky *@
+                            <img src="@GetSportImage(s.Name)"
+                                 onerror="this.src='imgs/logo.png'; this.className='placeholder-img';"
+                                 alt="@s.Name" />
+                        </div>
 
-                        <!-- SPORTOVIŠTĚ -->
-                        <td>
-                            @{
-                                var relatedFacilities = facilities
-                                .Where(f => f.Sports.Any(sp => sp.Id == s.Id))
-                                .ToList();
-                            }
+                        @* TEXTOVÝ OBSAH *@
+                        <div class="sport-row-body">
+                            <div class="sport-main-info">
+                                <h3>@s.Name</h3>
+                                <p class="sport-description">@GetNormalText(s.Name)</p>
+                            </div>
 
-                            @if (!relatedFacilities.Any())
-                            {
-                                <span>Žádné</span>
-                            }
-                            else
-                            {
-                                @foreach (var f in relatedFacilities)
+                            <div class="sport-facilities">
+                                <label>Kde si můžete zahrát:</label>
+                                @if (!relatedFacilities.Any())
                                 {
-                                    <NavLink href="@($"/facility/{f.Id}")" class="badge">
-                                        @f.Name
-                                    </NavLink>
+                                    <span class="no-facilities">Aktuálně připravujeme nové prostory pro tento sport.</span>
                                 }
-                            }
-                        </td>
-                    </tr>
+                                else
+                                {
+                                    <div class="facility-badges">
+                                        @foreach (var f in relatedFacilities)
+                                        {
+                                            <NavLink href="@($"/facility/{f.Id}")" class="facility-badge">
+                                                <i class="fa-solid fa-location-dot"></i> @f.Name
+                                            </NavLink>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 }
-            </tbody>
-        </table>
-    }
+            </div>
+        }
+    </div>
 </div>
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .sports-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .sports-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .header-section {
+        margin-bottom: 2.5rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--brand-dark);
+        letter-spacing: -0.5px;
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .sports-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sport-row-card {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .sport-row-card:hover {
+            border-color: var(--brand);
+            transform: translateX(5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+    .sport-image-container {
+        background: #f8fafc;
+        height: 240px;
+        border-right: 1px solid var(--border-soft);
+    }
+
+        .sport-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .placeholder-img {
+        padding: 4rem;
+        opacity: 0.2;
+        filter: grayscale(1);
+    }
+
+    .sport-row-body {
+        padding: 1.5rem 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.25rem;
+    }
+
+    .sport-main-info h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        color: var(--brand-dark);
+    }
+
+    .sport-description {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .sport-facilities label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--brand);
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .facility-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+
+    .facility-badge {
+        background: #f1f5f9;
+        color: var(--text-main);
+        padding: 0.4rem 0.9rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: 0.2s;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .facility-badge:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+            background: white;
+        }
+
+        .facility-badge i {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+    .no-facilities {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        font-style: italic;
+    }
+
+    .loading-state {
+        text-align: center;
+        padding: 5rem;
+    }
+
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--brand);
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 850px) {
+        .sport-row-card {
+            grid-template-columns: 1fr;
+        }
+
+        .sport-image-container {
+            height: 200px;
+            border-right: none;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .sports-container {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
     List<SportDto>? sports;
@@ -62,8 +274,76 @@
 
     protected override async Task OnInitializedAsync()
     {
-        sports = await Http.GetFromJsonAsync<List<SportDto>>("sports")?? new List<SportDto>();
+        try
+        {
+            sports = await Http.GetFromJsonAsync<List<SportDto>>("sports") ?? new();
+            facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data Load Error: " + ex.Message);
+            sports = new();
+            facilities = new();
+        }
+    }
 
-        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+    private string GetSportImage(string sportName)
+    {
+        // Mapa pro propojení názvů z databáze s tvými soubory
+        var imageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Tenis", "imgs/sport_tenis.png" },
+            { "Badminton", "imgs/sport_badminton.png" },
+            { "Squash", "imgs/sport_squash.png" },
+            { "Basketbal", "imgs/sport_basketball.png" },
+            { "Volejbal", "imgs/sport_volejbal.png" },
+            { "Futsal", "imgs/sport_futsal.png" },
+            { "Stolní tenis", "imgs/sport_stolni_tenis.png" }
+        };
+
+        if (imageMap.TryGetValue(sportName, out var path))
+        {
+            return path;
+        }
+
+        // Záložní varianta, pokud se název v DB neshoduje s mapou
+        return "imgs/sports/" + GetImageFileName(sportName);
+    }
+
+    private string GetNormalText(string sportName)
+    {
+        return sportName.ToLower() switch
+        {
+            var s when s.Contains("tenis") && !s.Contains("stolni") => "K dispozici jsou venkovní antukové kurty i vnitřní haly s pevným povrchem. Ideální pro rekreační hru i tréninky.",
+            var s when s.Contains("futsal") || s.Contains("fotbal") => "Hřiště s odpruženým povrchem pro futsal nebo umělou trávou pro fotbal. Kvalitní zázemí a osvětlení zajištěno.",
+            var s when s.Contains("basket") => "Profesionálně odpružené palubovky v moderních halách. Vhodné pro basketbal, volejbal a další halové sporty.",
+            var s when s.Contains("volej") => "Nabízíme zázemí pro klasický volejbal v halách i venkovní kurty pro plážový volejbal s jemným pískem.",
+            var s when s.Contains("badminton") => "Vyhrazené kurty v halách s vysokými stropy a optimální cirkulací vzduchu. Špičkové osvětlení pro nerušenou hru.",
+            var s when s.Contains("squash") => "Moderní squashové kurty s certifikovaným povrchem a skleněnými zadními stěnami pro diváky.",
+            var s when s.Contains("stolni") => "Stabilní stoly pro stolní tenis v osvětlených prostorech. Půjčení pálek a míčků je samozřejmostí.",
+            _ => "Nabízíme profesionální zázemí pro tento sport včetně veškerého potřebného vybavení a šaten pro sportovce."
+        };
+    }
+
+    private string GetImageFileName(string itemName)
+    {
+        if (string.IsNullOrEmpty(itemName)) return "logo.png";
+
+        var normalizedString = itemName.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new System.Text.StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString()
+            .Normalize(System.Text.NormalizationForm.FormC)
+            .ToLower()
+            .Replace(" ", "-") + ".jpg";
     }
 }

@@ -1,132 +1,361 @@
 ﻿@page "/facility/{id:int}"
 @using Frontend.DTO
+@using System.Net.Http.Json
+@using System.Globalization
 @inject HttpClient Http
 
+<div class="facility-detail-page">
+    <div class="detail-container">
 
-@if (facility == null)
-{
-    <p>Načítám...</p>
-}
-else
-{
-    <div class="card">
-        @if (venue != null)
+        @if (facility == null)
         {
-            <h2 style="color: var(--color-text);">@facility.Name</h2>
-            <p><b>Areál:</b> @venue.Name</p>
-
-            @if (!string.IsNullOrEmpty(venue.Address) || !string.IsNullOrEmpty(venue.City))
-            {
-                <p>
-                    <b>Adresa:</b>
-                    @venue.Address
-                    @if (!string.IsNullOrEmpty(venue.City))
-                    {
-                        <span>, @venue.City</span>
-                    }
-                </p>
-            }
-        }
-        <hr />
-        <h5>Sporty:</h5>
-        <div>
-            @foreach (var s in facility.Sports)
-            {
-                <span class="badge">@s.Name</span>
-            }
-        </div>
-        <hr />
-        <h5>Ceník:</h5>
-
-        @if (prices == null)
-        {
-            <p>Načítám ceny...</p>
-        }
-        else if (!prices.Any())
-        {
-            <p>Žádné ceny k dispozici</p>
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Načítám detaily sportoviště...</p>
+            </div>
         }
         else
         {
-            <table class="table1">
-                <thead>
-                    <tr>
-                        <th>Sport</th>
-                        <th>Členství</th>
-                        <th>Cena / hod</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var p in prices)
+            @* 1. HEADER SEKCE *@
+            <div class="facility-card-main shadow-sm">
+                <div class="facility-info-block">
+                    <h1 class="main-title">@facility.Name</h1>
+                    @if (venue != null)
                     {
-                        <tr>
-                            <td>
-                                @{
-                                    var sportName = facility.Sports.FirstOrDefault(s => s.Id == p.SportId)?.Name ?? "Neznámý";
-                                }
-                                @sportName
-                            </td>
-
-                            <td>
-                                <span class="badge @(p.Membership == "PREMIUM" ? "badge-vip" : "badge-basic")">
-                                    @p.Membership
-                                </span>
-                            </td>
-
-                            <td>@p.PricePerHour @p.Currency</td>
-                        </tr>
+                        <div class="location-info">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <div>
+                                <strong>@venue.Name</strong><br />
+                                <span>@venue.Address, @venue.City</span>
+                            </div>
+                        </div>
                     }
-                </tbody>
-            </table>
-        }
-        <hr />
-        <NavLink href="@($"/reservation?facilityId={Id}")" class="button2">
-            Pokračovat k rezervaci <i class="fa-solid fa-arrow-right"></i>
-        </NavLink>
-        <hr />
-        <h5>Aktuální Rezervace:</h5>
+                </div>
 
-        @if (reservations == null)
-        {
-            <p>Načítám rezervace...</p>
-        }
-        else if (!reservations.Any())
-        {
-            <p>Žádné rezervace</p>
-        }
-        else
-        {
-            <table class="table1">
-                <thead>
-                    <tr>
-                        <th>Od</th>
-                        <th>Do</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var r in reservations)
+                <div class="sport-badges-row">
+                    @foreach (var s in facility.Sports)
                     {
-                        <tr>
-                            <td>@r.StartAt.ToString("dd.MM.yyyy HH:mm")</td>
-                            <td>@r.EndAt.ToString("dd.MM.yyyy HH:mm")</td>
-
-                            <td>
-                                <span class="badge">
-                                    @r.Status
-                                </span>
-                            </td>
-                        </tr>
+                        <span class="sport-badge-large">@s.Name</span>
                     }
-                </tbody>
-            </table>
+                </div>
+
+                <div class="action-row">
+                    <NavLink href="@($"/reservation?facilityId={Id}")" class="btn-primary-modern">
+                        Přejít k rezervaci <i class="fa-solid fa-calendar-days ms-2"></i>
+                    </NavLink>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                @* 2. CENÍK *@
+                <div class="detail-section shadow-sm">
+                    <h3><i class="fa-solid fa-tag me-2"></i> Ceník pronájmu</h3>
+                    @if (prices == null || !prices.Any())
+                    {
+                        <p class="text-muted">Ceník pro toto sportoviště není momentálně k dispozici.</p>
+                    }
+                    else
+                    {
+                        <div class="price-list">
+                            @foreach (var p in prices)
+                            {
+                                var sportName = facility.Sports.FirstOrDefault(s => s.Id == p.SportId)?.Name ?? "Sport";
+                                <div class="price-item">
+                                    <div class="price-type">
+                                        <span class="sport-name">@sportName</span>
+                                        <span class="membership-badge @(p.Membership == "PREMIUM" ? "vip" : "basic")">
+                                            @p.Membership
+                                        </span>
+                                    </div>
+                                    <div class="price-value">@p.PricePerHour @p.Currency<span>/hod</span></div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @* 3. REZERVACE *@
+                <div class="detail-section shadow-sm">
+                    <h3><i class="fa-solid fa-clock-rotate-left me-2"></i> Aktuální obsazenost</h3>
+                    @if (reservations == null || !reservations.Any())
+                    {
+                        <div class="empty-reservations">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <p>Pro nejbližší dny nejsou žádné rezervace. Máte volné pole působnosti!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="res-list">
+                            @foreach (var r in reservations.OrderBy(res => res.StartAt).Take(10))
+                            {
+                                <div class="res-item">
+                                    <div class="res-date">
+                                        <strong>@r.StartAt.ToString("dd. MM.")</strong>
+                                        <span>@r.StartAt.ToString("HH:mm") – @r.EndAt.ToString("HH:mm")</span>
+                                    </div>
+                                    <span class="status-pill">@r.Status</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
         }
     </div>
-}
+</div>
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .facility-detail-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+        color: var(--text-main);
+    }
+
+    .detail-container {
+        width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Main Card */
+    .facility-card-main {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .main-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin: 0 0 1rem 0;
+    }
+
+    .location-info {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        color: var(--text-light);
+        margin-bottom: 2rem;
+    }
+
+        .location-info i {
+            color: var(--brand);
+            font-size: 1.4rem;
+            margin-top: 0.2rem;
+        }
+
+        .location-info strong {
+            color: var(--brand-dark);
+            font-size: 1.1rem;
+        }
+
+    .sport-badge-large {
+        background: #eff6ff;
+        color: var(--brand);
+        padding: 0.5rem 1rem;
+        border-radius: 0.6rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+    }
+
+    .action-row {
+        margin-top: 2.5rem;
+        border-top: 1px solid var(--border-soft);
+        padding-top: 2rem;
+    }
+
+    .btn-primary-modern {
+        display: inline-block;
+        background: var(--brand);
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+        .btn-primary-modern:hover {
+            background: #1d4ed8;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+    /* Grid layout for details */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .detail-section {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        padding: 1.5rem;
+    }
+
+        .detail-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--brand-dark);
+        }
+
+    /* Price List */
+    .price-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .price-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .price-type {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .sport-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .membership-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.25rem;
+        width: fit-content;
+    }
+
+        .membership-badge.vip {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .membership-badge.basic {
+            background: #f1f5f9;
+            color: var(--text-light);
+        }
+
+    .price-value {
+        font-weight: 800;
+        color: var(--brand);
+        font-size: 1.1rem;
+    }
+
+        .price-value span {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-left: 0.2rem;
+        }
+
+    /* Reservations List */
+    .res-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .res-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .res-date {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.85rem;
+    }
+
+        .res-date strong {
+            color: var(--brand-dark);
+        }
+
+    .status-pill {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-light);
+    }
+
+    .empty-reservations {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-light);
+    }
+
+        .empty-reservations i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+    /* Loading States */
+    .loading-state {
+        text-align: center;
+        padding: 5rem;
+    }
+
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--brand);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 850px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-container {
+            width: 100%;
+        }
+    }
+</style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
     FacilityResponseDto? facility;
     List<PriceListResponseDto>? prices;
@@ -135,14 +364,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var allFacilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
-        facility = allFacilities.FirstOrDefault(f => f.Id == Id);
+        try
+        {
+            // Načtení detailu sportoviště
+            var allFacilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities") ?? new();
+            facility = allFacilities.FirstOrDefault(f => f.Id == Id);
 
-        prices = await Http.GetFromJsonAsync<List<PriceListResponseDto>>($"facilities/{Id}/prices")?? new List<PriceListResponseDto>();
+            if (facility != null)
+            {
+                // Načtení cen
+                prices = await Http.GetFromJsonAsync<List<PriceListResponseDto>>($"facilities/{Id}/prices") ?? new();
 
-        var venues = await Http.GetFromJsonAsync<List<VenueResponseDto>>("venues")?? new List<VenueResponseDto>();
-        venue = venues.FirstOrDefault(v => v.Id == facility?.VenueId);
+                // Načtení areálu (venue)
+                var venues = await Http.GetFromJsonAsync<List<VenueResponseDto>>("venues") ?? new();
+                venue = venues.FirstOrDefault(v => v.Id == facility.VenueId);
 
-        reservations = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"facilities/{Id}/reservations")?? new List<ReservationResponseDto>();
+                // Načtení rezervací
+                var allRes = await Http.GetFromJsonAsync<List<ReservationResponseDto>>($"Reservations") ?? new();
+                // Filtrujeme pouze budoucí nebo dnešní rezervace pro toto konkrétní sportoviště
+                reservations = allRes
+                    .Where(r => r.FacilityId == Id && r.Status != "CANCELLED" && r.EndAt >= DateTime.Now)
+                    .OrderBy(r => r.StartAt)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading facility details: " + ex.Message);
+        }
     }
 }

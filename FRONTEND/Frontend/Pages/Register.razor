@@ -1,44 +1,231 @@
 ﻿@page "/register"
 @using Frontend.DTO
+@using System.Net.Http.Json
 @inject HttpClient Http
 @inject NavigationManager Nav
 
-<div class="card">
-    <h1>Registrace</h1>
+<div class="login-page">
+    <div class="login-main-container">
 
-    <div class="form1">
+        @* HEADER SEKCE *@
+        <div class="header-section">
+            <h1 class="main-title">Registrace</h1>
+            <p class="sub-title">Vytvořte si účet pro rychlé a snadné rezervace sportovišť.</p>
+        </div>
 
-        <input class="input1"
-               placeholder="Email"
-               @bind="model.Email" />
+        <div class="login-wide-card shadow-sm">
+            <div class="login-form-layout">
 
-        <input class="input1"
-               placeholder="Celé jméno"
-               @bind="model.FullName" />
+                @* LEVÁ STRANA: FORMULÁŘ *@
+                <div class="login-inputs">
+                    <div class="input-field">
+                        <label>E-mailová adresa</label>
+                        <input type="email" class="input-modern" placeholder="jmeno@email.cz" @bind="model.Email" />
+                    </div>
 
-        <input type="password"
-               class="input1"
-               placeholder="Heslo"
-               @bind="model.Password" />
+                    <div class="input-field">
+                        <label>Celé jméno</label>
+                        <input type="text" class="input-modern" placeholder="Jan Novák" @bind="model.FullName" />
+                    </div>
 
-        <button class="button2" style="width:200px" @onclick="RegisterUser">
-            Registrovat <i class="fa-solid fa-user-plus"></i>
-        </button>
+                    <div class="input-field">
+                        <label>Heslo</label>
+                        <input type="password" class="input-modern" placeholder="Minimálně 6 znaků" @bind="model.Password" />
+                    </div>
 
-        @if (!string.IsNullOrEmpty(message))
-        {
-            <p>@message</p>
-        }
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="error-text">
+                            <i class="fa-solid fa-circle-exclamation"></i> @message
+                        </div>
+                    }
+                </div>
 
+                @* PRAVÁ STRANA: AKCE *@
+                <div class="login-actions">
+                    <button class="btn-login-main" @onclick="RegisterUser">
+                        Vytvořit účet <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                    <div class="register-link">
+                        Již máte účet? <a href="/login">Přihlaste se</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
 
+    .login-page {
+        background-color: var(--bg-page);
+        min-height: 85vh;
+        padding: 4rem 0;
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
+    .login-main-container {
+        width: 1000px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .header-section {
+        margin-bottom: 3rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--brand-dark);
+        letter-spacing: -0.5px;
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        font-size: 1rem;
+        margin-top: 0.25rem;
+        line-height: 1.5;
+    }
+
+    .login-wide-card {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        padding: 3.5rem;
+    }
+
+    .login-form-layout {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 5rem;
+        align-items: center;
+    }
+
+    .login-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+    }
+
+    .input-field label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 0.6rem;
+        letter-spacing: 1px;
+    }
+
+    .input-modern {
+        width: 100%;
+        padding: 0.8rem 1.1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-soft);
+        font-size: 1rem;
+        background: #fcfcfc;
+        transition: all 0.2s;
+    }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: var(--brand);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+        }
+
+    .login-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        border-left: 1px solid var(--border-soft);
+        padding-left: 5rem;
+        text-align: center;
+    }
+
+    .btn-login-main {
+        background: var(--brand);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 0.6rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+        .btn-login-main:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+    .register-link {
+        font-size: 0.95rem;
+        color: var(--text-light);
+    }
+
+        .register-link a {
+            color: var(--brand);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+            .register-link a:hover {
+                text-decoration: underline;
+            }
+
+    .error-text {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid #fee2e2;
+    }
+
+    @@media (max-width: 900px) {
+        .login-main-container {
+            width: 100%;
+        }
+
+        .login-form-layout {
+            grid-template-columns: 1fr;
+            gap: 3rem;
+        }
+
+        .login-actions {
+            border-left: none;
+            padding-left: 0;
+            padding-top: 2.5rem;
+            border-top: 1px solid var(--border-soft);
+        }
+    }
+</style>
 
 @code {
     CreateUserRequestDto model = new();
-
     string? message;
 
     async Task RegisterUser()
@@ -47,24 +234,27 @@
 
         if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
         {
-            message = "Vyplň email a heslo!";
+            message = "Vyplňte prosím e-mail a heslo.";
             return;
         }
 
-        var response = await Http.PostAsJsonAsync("users", model);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var user = await response.Content.ReadFromJsonAsync<UserResponseDto>();
+            var response = await Http.PostAsJsonAsync("users", model);
 
-            message = $"Registrace úspěšná! ID: {user?.Id}";
-
-            Nav.NavigateTo("/login");
+            if (response.IsSuccessStatusCode)
+            {
+                Nav.NavigateTo("/login");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                message = $"Chyba: {error}";
+            }
         }
-        else
+        catch
         {
-            var error = await response.Content.ReadAsStringAsync();
-            message = $"Chyba: {error}";
+            message = "Došlo k chybě při komunikaci se serverem.";
         }
     }
 }

@@ -1,174 +1,792 @@
 ﻿@page "/reservation"
 @using Frontend.DTO
+@using System.Net.Http.Json
+@using System.Globalization
 @inject HttpClient Http
 @inject AuthService AuthService
+@inject NavigationManager Nav
 
-<div class="card">
-    <h1>Nová rezervace</h1>
+@{
+    string[] dnyTyden = { "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle" };
+}
 
-    @if (facilities == null || facilities.Count == 0)
-    {
-        <p>Načítám...</p>
-    }
-    else
-    {
-        <div>
+<div class="reservation-page">
+    <div class="reservation-container">
 
-            <!-- FACILITY -->
-            <label>Sportoviště:</label>
-            <select class="input1" @onchange="OnFacilityChanged">
-                <option value="">-- vyber sportoviště --</option>
-
-                @foreach (var f in facilities)
-                {
-                    <option value="@f.Id" selected="@(f.Id == selectedFacilityId)">
-                        @f.Name
-                    </option>
-                }
-            </select>
-
-
-
-            <!-- SPORT -->
-            <label>Sport:</label>
-            <select class="input1"
-                    @bind="selectedSportId"
-                    disabled="@(filteredSports.Count == 0)">
-                <option value="">-- vyber sport --</option>
-
-                @foreach (var s in filteredSports)
-                {
-                    <option value="@s.Id">@s.Name</option>
-                }
-            </select>
-
-
-
-            <!-- DATUM -->
-            <label>Začátek:</label>
-            <input type="datetime-local" class="input1" @bind="startAt" />
-
-            <label>Konec:</label>
-            <input type="datetime-local" class="input1" @bind="endAt" />
-
-
-
-            <button class="button2" @onclick="ConfirmReservation">
-                Potvrdit rezervaci <i class="fa-solid fa-arrow-right"></i>
-            </button>
-
-            @if (!string.IsNullOrEmpty(message))
-            {
-                <p>@message</p>
-            }
-
+        <div class="header-section">
+            <h1 class="main-title">Rezervace sportoviště</h1>
+            <p class="sub-title">Vyberte si sportoviště a volný čas pro váš trénink.</p>
         </div>
-    }
+
+        @* SELECTION ROW *@
+        <div class="selection-grid shadow-sm two-cols">
+            <div class="selection-item">
+                <label>1. Vyberte sportoviště</label>
+                <select class="form-select-modern" @onchange="HandleFacilityChange">
+                    <option value="0">-- vyberte sportoviště --</option>
+                    @foreach (var f in facilities)
+                    {
+                        <option value="@f.Id" selected="@(f.Id == selectedFacilityId)">@f.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="selection-item">
+                <label>2. Vyberte sport</label>
+                <select class="form-select-modern" @bind="selectedSportId" disabled="@(selectedFacilityId == 0)">
+                    <option value="0">-- vyberte sport --</option>
+                    @foreach (var s in availableSports)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        @* LOGIN NOTICE *@
+        @if (!isUserLoggedIn && selectedFacilityId > 0 && selectedSportId > 0)
+        {
+            <div class="login-notice-warning shadow-sm">
+                <div class="notice-content">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <strong>Rezervace je přístupná pouze přihlášeným uživatelům.</strong><br />
+                        <span>Vyberte si termín a poté se přihlaste k dokončení objednávky.</span>
+                    </div>
+                </div>
+                <div class="notice-actions">
+                    <a href="/login" class="btn-notice-login">Přihlásit se</a>
+                    <a href="/register" class="btn-notice-register">Registrace</a>
+                </div>
+            </div>
+        }
+
+        @* WEEKLY GRID *@
+        <div class="scheduler-wrapper">
+            @if (selectedFacilityId > 0 && selectedSportId > 0)
+            {
+                <div class="scheduler-card shadow-sm">
+                    <div class="scheduler-nav">
+                        <button class="btn-nav-arrow" @onclick="PrevWeek"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="nav-label">
+                            @startOfWeek.ToString("dd. MM.") – @startOfWeek.AddDays(6).ToString("dd. MM. yyyy")
+                        </span>
+                        <button class="btn-nav-arrow" @onclick="NextWeek"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th class="time-header">Čas</th>
+                                    @for (int i = 0; i < 7; i++)
+                                    {
+                                        var date = startOfWeek.AddDays(i);
+                                        <th class="@(date.Date == DateTime.Today ? "col-today-header" : "")">
+                                            <div class="day-name">@dnyTyden[i]</div>
+                                            <div class="day-date">@date.ToString("dd.MM.")</div>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int hour = 8; hour <= 20; hour++)
+                                {
+                                    <tr>
+                                        <td class="time-cell">@hour:00</td>
+                                        @for (int day = 0; day < 7; day++)
+                                        {
+                                            var slotTime = startOfWeek.AddDays(day).Date.AddHours(hour);
+                                            var isReserved = CheckIfReserved(slotTime);
+                                            var isPast = slotTime < DateTime.Now;
+
+                                            <td class="@(startOfWeek.AddDays(day).Date == DateTime.Today ? "col-today-cell" : "")">
+                                                @if (isReserved)
+                                                {
+                                                    <div class="slot-reserved">Obsazeno</div>
+                                                }
+                                                else if (isPast)
+                                                {
+                                                    <div class="slot-past">-</div>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn-slot-free @(!isUserLoggedIn ? "locked" : "")"
+                                                            @onclick="() => OpenBookingModal(slotTime)"
+                                                            disabled="@(!isUserLoggedIn)">
+                                                        Volno
+                                                    </button>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state-card shadow-sm">
+                    <div class="empty-state-content">
+                        <div class="icon-circle">
+                            <i class="fa-solid fa-arrow-pointer"></i>
+                        </div>
+                        <h3>@(selectedFacilityId == 0 ? "Vyberte sportoviště" : "Vyberte sport")</h3>
+                        <p>
+                            @(selectedFacilityId == 0
+                                                    ? "Nejprve vyberte konkrétní sportoviště v horní liště, aby se mohl zobrazit rozvrh." 
+                                                                    : "Nyní prosím vyberte sport, který chcete provozovat, aby se načetla obsazenost.")
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 </div>
 
+@* DIALOG PRO POTVRZENÍ S VÝBĚREM VYBAVENÍ *@
+@if (showModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content-modern shadow-lg">
+            <div class="modal-header-simple">
+                <h3>Potvrzení rezervace</h3>
+                <button class="btn-close-simple" @onclick="() => showModal = false">&times;</button>
+            </div>
+            <div class="modal-body-simple">
+                <div class="slot-summary">
+                    <span class="slot-label">Vybraný termín:</span>
+                    @{
+                        string[] mesice = { "", "ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince" };
+                        int indexDne = ((int)selectedSlot.DayOfWeek + 6) % 7;
+                        string ceskyDen = dnyTyden[indexDne];
+                        string ceskeDatum = $"{selectedSlot.Day}. {mesice[selectedSlot.Month]}";
+                    }
+                    <span class="slot-value">@ceskyDen @ceskeDatum v @selectedSlot.ToString("HH:00")</span>
+                </div>
+
+                @* SEKCE VYBAVENÍ *@
+                <div class="equipment-selection">
+                    <label class="section-label">Potřebujete zapůjčit vybavení?</label>
+                    <div class="equipment-mini-list">
+                        @if (allEquipment == null || !allEquipment.Any())
+                        {
+                            <p class="text-muted small">Žádné vybavení není momentálně k dispozici.</p>
+                        }
+                        else
+                        {
+                            @foreach (var item in allEquipment.Where(x => x.QuantityAvailable > 0))
+                            {
+                                <div class="eq-mini-item">
+                                    <span class="eq-name">@item.Name <small>(@item.PricePerHour Kč/h)</small></span>
+                                    <div class="eq-controls">
+                                        <button class="btn-qty" @onclick="() => RemoveEquipment(item.Id)">-</button>
+                                        <span class="eq-count">@(selectedEquipment.GetValueOrDefault(item.Id, 0))</span>
+                                        <button class="btn-qty" @onclick="() => AddEquipment(item.Id)">+</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="modal-actions-simple">
+                    <button class="btn-secondary-flat" @onclick="() => showModal = false">Zrušit</button>
+                    <button class="btn-primary-flat" @onclick="ConfirmBooking">Potvrdit a rezervovat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    :root {
+        --brand: #2563eb;
+        --brand-dark: #1e293b;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --bg-page: #f8fafc;
+        --border-soft: #e2e8f0;
+    }
+
+    .reservation-page {
+        background-color: var(--bg-page);
+        min-height: 100vh;
+        padding: 3rem 0;
+        color: var(--text-main);
+    }
+
+    .reservation-container {
+        width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .header-section {
+        margin-bottom: 2.5rem;
+        border-left: 4px solid var(--brand);
+        padding-left: 1.5rem;
+    }
+
+    .main-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--brand-dark);
+    }
+
+    .sub-title {
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+    }
+
+    .selection-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        background: white;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        margin-bottom: 2rem;
+    }
+
+    .selection-item label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-select-modern {
+        width: 100%;
+        padding: 0.6rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-soft);
+        font-size: 0.95rem;
+        color: var(--text-main);
+    }
+
+    .login-notice-warning {
+        background: #fffbeb;
+        border: 1px solid #f59e0b;
+        border-left: 5px solid #f59e0b;
+        color: #92400e;
+        padding: 1.25rem 1.5rem;
+        border-radius: 0.75rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .notice-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+        .notice-content i {
+            font-size: 1.5rem;
+            color: #f59e0b;
+        }
+
+    .notice-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-notice-login {
+        background: #f59e0b;
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: none;
+    }
+
+    .btn-notice-register {
+        background: white;
+        color: #92400e;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: 1px solid #f59e0b;
+    }
+
+    .empty-state-card {
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--border-soft);
+        padding: 5rem 2rem;
+        text-align: center;
+    }
+
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        background: #f1f5f9;
+        color: var(--brand);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.5rem;
+    }
+
+    .empty-state-content h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--brand-dark);
+    }
+
+    .empty-state-content p {
+        color: var(--text-light);
+        max-width: 400px;
+        margin: 0 auto;
+        font-size: 0.95rem;
+    }
+
+    .scheduler-card {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-soft);
+        overflow: hidden;
+    }
+
+    .scheduler-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-soft);
+        background: #fcfcfc;
+    }
+
+    .nav-label {
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .btn-nav-arrow {
+        background: white;
+        border: 1px solid var(--border-soft);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: var(--text-light);
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+        .modern-table th {
+            padding: 1rem 0.5rem;
+            background: #fcfcfc;
+            border-bottom: 1px solid var(--border-soft);
+            text-align: center;
+        }
+
+        .modern-table td {
+            border-bottom: 1px solid #f8fafc;
+            text-align: center;
+            height: 3.5rem;
+        }
+
+    .time-header, .time-cell {
+        width: 70px;
+        font-weight: 700;
+        color: var(--brand);
+        font-size: 0.85rem;
+        border-right: 1px solid var(--border-soft);
+        text-align: center;
+    }
+
+    .day-name {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .day-date {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .col-today-header {
+        background-color: #f0f7ff !important;
+    }
+
+    .btn-slot-free {
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #dcfce7;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+        .btn-slot-free:hover:not(:disabled) {
+            background: #16a34a;
+            color: white;
+            border-color: #16a34a;
+        }
+
+        .btn-slot-free.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .slot-reserved {
+        color: #dc2626;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #fef2f2;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+    }
+
+    .slot-past {
+        color: #cbd5e1;
+        font-size: 0.85rem;
+    }
+
+    /* Modal & Equipment Controls */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15,23,42,0.4);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content-modern {
+        background: white;
+        width: 440px;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .modal-header-simple {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+        .modal-header-simple h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+    .btn-close-simple {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-light);
+    }
+
+    .modal-body-simple {
+        padding: 1.5rem;
+    }
+
+    .slot-summary {
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-soft);
+    }
+
+    .slot-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        font-weight: 700;
+        text-transform: uppercase;
+        display: block;
+    }
+
+    .slot-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--brand);
+    }
+
+    .equipment-selection {
+        margin-bottom: 2rem;
+        border-top: 1px dashed var(--border-soft);
+        padding-top: 1.25rem;
+    }
+
+    .section-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .eq-mini-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid #f8fafc;
+    }
+
+    .eq-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .eq-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-qty {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid var(--border-soft);
+        background: white;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+
+        .btn-qty:hover {
+            background: var(--brand);
+            color: white;
+            border-color: var(--brand);
+        }
+
+    .eq-count {
+        font-weight: 800;
+        color: var(--brand-dark);
+        min-width: 12px;
+        text-align: center;
+    }
+
+    .modal-actions-simple {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-primary-flat {
+        flex: 2;
+        background: var(--brand);
+        color: white;
+        border: none;
+        padding: 0.85rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-primary-flat:hover {
+            background: #1d4ed8;
+        }
+
+    .btn-secondary-flat {
+        flex: 1;
+        background: #f1f5f9;
+        color: var(--text-main);
+        border: none;
+        padding: 0.85rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+</style>
+
 @code {
-    [SupplyParameterFromQuery]
-    public int? FacilityId { get; set; }
+    private List<FacilityResponseDto> facilities = new();
+    private List<SportDto> availableSports = new();
+    private List<ReservationResponseDto> allReservations = new();
+    private List<EquipmentResponseDto> allEquipment = new();
+    private Dictionary<int, int> selectedEquipment = new();
 
-    List<FacilityResponseDto> facilities = new();
-    List<SportDto> filteredSports = new();
+    private int selectedFacilityId = 0;
+    private int selectedSportId = 0;
+    private DateTime startOfWeek;
+    private DateTime selectedSlot;
 
-    int? selectedFacilityId;
-    int? selectedSportId;
-
-    DateTime startAt = DateTime.Now;
-    DateTime endAt = DateTime.Now.AddHours(1);
-
-    string? message;
+    private bool showModal = false;
+    private bool isUserLoggedIn = false;
 
     protected override async Task OnInitializedAsync()
     {
-        facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities")?? new List<FacilityResponseDto>();
+        startOfWeek = GetMonday(DateTime.Today);
+        await CheckUserStatus();
 
-        if (FacilityId.HasValue)
+        try
         {
-            selectedFacilityId = FacilityId.Value;
+            facilities = await Http.GetFromJsonAsync<List<FacilityResponseDto>>("facilities") ?? new();
+            allEquipment = await Http.GetFromJsonAsync<List<EquipmentResponseDto>>("equipments") ?? new();
 
-            var facility = facilities.FirstOrDefault(f => f.Id == selectedFacilityId);
-            filteredSports = facility?.Sports ?? new List<SportDto>();
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("facilityId", out var facilityIdVal))
+            {
+                if (int.TryParse(facilityIdVal, out var id))
+                {
+                    selectedFacilityId = id;
+                    await LoadFacilityData(id);
+                }
+            }
         }
+        catch (Exception ex) { Console.WriteLine("Data Load Error: " + ex.Message); }
     }
 
-    void OnFacilityChanged(ChangeEventArgs e)
+    private async Task CheckUserStatus()
     {
-        selectedSportId = null;
+        var token = await AuthService.GetToken();
+        isUserLoggedIn = !string.IsNullOrEmpty(token);
+    }
 
+    private async Task HandleFacilityChange(ChangeEventArgs e)
+    {
         if (int.TryParse(e.Value?.ToString(), out var id))
         {
             selectedFacilityId = id;
-
-            var facility = facilities.FirstOrDefault(f => f.Id == id);
-            filteredSports = facility?.Sports ?? new List<SportDto>();
+            await LoadFacilityData(id);
         }
         else
         {
-            selectedFacilityId = null;
-            filteredSports = new List<SportDto>();
+            selectedFacilityId = 0;
+            selectedSportId = 0;
+            availableSports.Clear();
         }
     }
 
-    async Task ConfirmReservation()
+    private async Task LoadFacilityData(int facilityId)
     {
-        if (selectedFacilityId == null || selectedSportId == null)
+        selectedSportId = 0;
+        var fac = facilities.FirstOrDefault(f => f.Id == facilityId);
+        availableSports = fac?.Sports ?? new();
+
+        if (availableSports.Count == 1)
         {
-            message = "Vyber sportoviště a sport!";
-            return;
+            selectedSportId = availableSports[0].Id;
         }
 
-        var token = await AuthService.GetToken();
-        if (string.IsNullOrEmpty(token))
-        {
-            message = "Musíš být přihlášen!";
-            return;
-        }
+        await LoadReservations();
+    }
 
+    private async Task LoadReservations()
+    {
+        if (selectedFacilityId == 0) return;
+        try
+        {
+            var res = await Http.GetFromJsonAsync<List<ReservationResponseDto>>("Reservations") ?? new();
+            allReservations = res.Where(r => r.FacilityId == selectedFacilityId && r.Status != "CANCELLED").ToList();
+        }
+        catch { }
+    }
+
+    private bool CheckIfReserved(DateTime slot) => allReservations.Any(r => r.StartAt <= slot && r.EndAt > slot);
+
+    private async Task OpenBookingModal(DateTime slot)
+    {
+        await CheckUserStatus();
+        if (!isUserLoggedIn) return;
+
+        selectedSlot = slot;
+        selectedEquipment.Clear(); // Reset výběru vybavení při každém otevření
+        showModal = true;
+    }
+
+    private void AddEquipment(int id)
+    {
+        if (!selectedEquipment.ContainsKey(id)) selectedEquipment[id] = 0;
+        selectedEquipment[id]++;
+    }
+    private void RemoveEquipment(int id)
+    {
+        if (selectedEquipment.ContainsKey(id) && selectedEquipment[id] > 0)
+        {
+            selectedEquipment[id]--;
+        }
+    }
+
+    private async Task ConfirmBooking()
+    {
         var user = await AuthService.GetUser();
-        if (user == null)
-        {
-            message = "Nepodařilo se načíst uživatele.";
-            return;
-        }
+        var token = await AuthService.GetToken();
+        if (user == null || string.IsNullOrEmpty(token)) return;
 
         var dto = new CreateReservationRequestDto
         {
             UserId = user.Id,
-            FacilityId = selectedFacilityId.Value,
-            SportId = selectedSportId.Value,
-            StartAt = startAt,
-            EndAt = endAt
+            FacilityId = selectedFacilityId,
+            SportId = selectedSportId,
+            StartAt = selectedSlot,
+            EndAt = selectedSlot.AddHours(1)
         };
 
-        try
+        var request = new HttpRequestMessage(HttpMethod.Post, "Reservations") { Content = JsonContent.Create(dto) };
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Trim('"'));
+
+        var response = await Http.SendAsync(request);
+        if (response.IsSuccessStatusCode)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "Reservations")
+            var createdRes = await response.Content.ReadFromJsonAsync<ReservationResponseDto>();
+
+            // Odeslání požadavků na vybavení
+            foreach (var eq in selectedEquipment.Where(x => x.Value > 0))
             {
-                Content = JsonContent.Create(dto)
-            };
-
-            token = token?.Trim('"');
-            request.Headers.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            var response = await Http.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (response.IsSuccessStatusCode)
-            {
-                message = "Rezervace vytvořena!";
+                var rentalDto = new
+                {
+                    EquipmentId = eq.Key,
+                    ReservationId = createdRes.Id,
+                    Qty = eq.Value
+                };
+                await Http.PostAsJsonAsync("equipmentrentals", rentalDto);
             }
-            else
-            {
-                message = $"{content}";
-            }
-        }
-        catch (Exception ex)
-        {
-            message = $"{ex.Message}";
+
+            showModal = false;
+            Nav.NavigateTo("/profile");
         }
     }
+
+    private DateTime GetMonday(DateTime day)
+    {
+        int diff = (7 + (day.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return day.AddDays(-1 * diff).Date;
+    }
+    private void PrevWeek() => startOfWeek = startOfWeek.AddDays(-7);
+    private void NextWeek() => startOfWeek = startOfWeek.AddDays(7);
 }
